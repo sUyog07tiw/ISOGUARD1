@@ -5,7 +5,10 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import Home from "./pages/Home.jsx";
 import Login from "./pages/auth/Login.jsx";
 import Signup from "./pages/auth/Signup.jsx";
-import Dashboard from "./pages/Dashboard.jsx";
+import Dashboard from "./pages/dashboard/Dashboard.jsx";
+import Settings from "./pages/dashboard/Settings.jsx";
+import GapAnalysis from "./pages/dashboard/GapAnalysis.jsx";
+import Reports from "./pages/dashboard/Reports.jsx";
 
 // Route Guards
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
@@ -43,6 +46,30 @@ const App = () => {
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <Settings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/gap-analysis"
+            element={
+              <ProtectedRoute>
+                <GapAnalysis />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reports"
+            element={
+              <ProtectedRoute>
+                <Reports />
               </ProtectedRoute>
             }
           />

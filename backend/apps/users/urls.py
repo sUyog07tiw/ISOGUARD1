@@ -1,4 +1,5 @@
 from django.urls import path
+from . import views
 from .views import register, login, refresh_token, get_user_profile, update_user_profile
 
 urlpatterns = [
@@ -7,4 +8,5 @@ urlpatterns = [
     path('refresh/', refresh_token, name='refresh_token'),
     path('profile/', get_user_profile, name='get_profile'),
     path('profile/update/', update_user_profile, name='update_profile'),
+    path('change-password/', views.change_password, name='change_password'),
 ]

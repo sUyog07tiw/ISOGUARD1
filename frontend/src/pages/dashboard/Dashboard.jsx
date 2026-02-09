@@ -1,8 +1,8 @@
 import React, { useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import logo from "../assets/Logo.jpg";
-import { logout, getCurrentUser } from "../utils/auth";
-import api from "../utils/api";
+import { useNavigate, Link } from "react-router-dom";
+import logo from "../../assets/Logo.jpg";
+import { logout, getCurrentUser } from "../../utils/auth";
+import api from "../../utils/api";
 
 
 export default function Dashboard() {
@@ -63,10 +63,10 @@ export default function Dashboard() {
           <p className="text-xs text-red-200 mt-1">ISO 27001 Validator</p>
         </div>
         <nav className="mt-6 flex-1 space-y-2">
-          <a href="#" className="block py-3 px-6 bg-red-600/90 rounded-full transition-colors">Overview</a>
-          <a href="#" className="block py-3 px-6 hover:bg-red-700/60 text-red-100 rounded-full transition-colors">Gap Analysis</a>
-          <a href="#" className="block py-3 px-6 hover:bg-red-700/60 text-red-100 rounded-full transition-colors">Reports</a>
-          <a href="#" className="block py-3 px-6 hover:bg-red-700/60 text-red-100 rounded-full transition-colors">Settings</a>
+          <Link to="/dashboard" className="block py-3 px-6 bg-red-600/90 rounded-full transition-colors">Overview</Link>
+          <Link to="/gap-analysis" className="block py-3 px-6 hover:bg-red-700/60 text-red-100 rounded-full transition-colors">Gap Analysis</Link>
+          <Link to="/reports" className="block py-3 px-6 hover:bg-red-700/60 text-red-100 rounded-full transition-colors">Reports</Link>
+          <Link to="/settings" className="block py-3 px-6 hover:bg-red-700/60 text-red-100 rounded-full transition-colors">Settings</Link>
         </nav>
         {/* User Info & Logout */}
         <div className="p-4 border-t border-gray-700">
@@ -117,31 +117,31 @@ export default function Dashboard() {
             <div
               className={`flex flex-col items-center justify-center p-12 rounded-2xl transition-all border-2 ${dragActive ? 'border-red-500/70 bg-red-500/10' : 'border-white/10 bg-gray-900'}`}
               onDragOver={() => setDragActive(true)}
-                onDragLeave={() => setDragActive(false)}
-                onDrop={async (e) => {
-                  e.preventDefault();
-                  setDragActive(false);
-                  const dropped = e.dataTransfer.files;
-                  if (!dropped || dropped.length === 0) return;
+              onDragLeave={() => setDragActive(false)}
+              onDrop={async (e) => {
+                e.preventDefault();
+                setDragActive(false);
+                const dropped = e.dataTransfer.files;
+                if (!dropped || dropped.length === 0) return;
 
-                  // Only allow PDF files
-                  const pdfFiles = Array.from(dropped).filter(f => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'));
-                  if (pdfFiles.length === 0) {
-                    alert('Only PDF files are allowed.');
-                    return;
-                  }
+                // Only allow PDF files
+                const pdfFiles = Array.from(dropped).filter(f => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'));
+                if (pdfFiles.length === 0) {
+                  alert('Only PDF files are allowed.');
+                  return;
+                }
 
-                  const formData = new FormData();
-                  for (const file of pdfFiles) formData.append('files', file);
+                const formData = new FormData();
+                for (const file of pdfFiles) formData.append('files', file);
 
-                  try {
-                    await api.upload('/documents/upload/', formData);
-                    alert('Files uploaded successfully');
-                  } catch (err) {
-                    console.error(err);
-                    alert('Upload failed: ' + (err.message || 'Unknown error'));
-                  }
-                }}
+                try {
+                  await api.upload('/documents/upload/', formData);
+                  alert('Files uploaded successfully');
+                } catch (err) {
+                  console.error(err);
+                  alert('Upload failed: ' + (err.message || 'Unknown error'));
+                }
+              }}
             >
               <svg className="w-12 h-12 text-red-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
