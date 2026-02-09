@@ -121,10 +121,24 @@ export default function Dashboard() {
             <p className="text-sm text-red-200 mb-6">Drop audit evidence and ISOGUARD highlights every clause, control, and risk.</p>
             <div
               className={`flex flex-col items-center justify-center p-12 rounded-2xl transition-all border-2 ${dragActive ? 'border-red-500/70 bg-red-500/10' : 'border-white/10 bg-gray-900'}`}
-              onDragOver={() => setDragActive(true)}
-              onDragLeave={() => setDragActive(false)}
+              onDragEnter={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setDragActive(true);
+              }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setDragActive(true);
+              }}
+              onDragLeave={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setDragActive(false);
+              }}
               onDrop={async (e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 setDragActive(false);
                 const dropped = e.dataTransfer.files;
                 if (!dropped || dropped.length === 0) return;
@@ -160,8 +174,11 @@ export default function Dashboard() {
               </svg>
               <p className="text-gray-300">Drag and drop your Policy or Audit Report here</p>
               <p className="text-xs text-gray-400 mt-2">Supports PDF, DOCX, TXT (Max 50MB)</p>
-              <button className="mt-6 bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-2 rounded-full font-semibold shadow-lg">
-                <span onClick={handleSelectFiles}>Select Files</span>
+              <button
+                onClick={handleSelectFiles}
+                className="mt-6 bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-2 rounded-full font-semibold shadow-lg"
+              >
+                Select Files
               </button>
               <input
                 ref={fileInputRef}
