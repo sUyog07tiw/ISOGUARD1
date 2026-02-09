@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "apps.core",
     "apps.compliance",
     "apps.audit",
+    "apps.documents",
 ]
 
 # -------------------------------------------------

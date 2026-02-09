@@ -25,24 +25,29 @@ export default function Dashboard() {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    // Only allow PDF files
-    const pdfFiles = Array.from(files).filter(f => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'));
-    if (pdfFiles.length === 0) {
-      alert('Only PDF files are allowed.');
+    // Allow PDF, DOCX, TXT files
+    const allowedExtensions = ['.pdf', '.docx', '.txt'];
+    const validFiles = Array.from(files).filter(f => 
+      allowedExtensions.some(ext => f.name.toLowerCase().endsWith(ext))
+    );
+    
+    if (validFiles.length === 0) {
+      alert('Only PDF, DOCX, and TXT files are allowed.');
       return;
     }
 
-    const formData = new FormData();
-    for (const file of pdfFiles) {
-      formData.append('files', file);
-    }
+    // Upload files one at a time (backend expects single file)
+    for (const file of validFiles) {
+      const formData = new FormData();
+      formData.append('file', file);
 
-    try {
-      await api.upload('/documents/upload/', formData);
-      alert('Files uploaded successfully');
-    } catch (err) {
-      console.error(err);
-      alert('Upload failed: ' + (err.message || 'Unknown error'));
+      try {
+        await api.upload('/documents/', formData);
+        alert(`${file.name} uploaded successfully`);
+      } catch (err) {
+        console.error(err);
+        alert(`Upload failed for ${file.name}: ` + (err.message || 'Unknown error'));
+      }
     }
   };
 
@@ -124,22 +129,29 @@ export default function Dashboard() {
                 const dropped = e.dataTransfer.files;
                 if (!dropped || dropped.length === 0) return;
 
-                // Only allow PDF files
-                const pdfFiles = Array.from(dropped).filter(f => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'));
-                if (pdfFiles.length === 0) {
-                  alert('Only PDF files are allowed.');
+                // Allow PDF, DOCX, TXT files
+                const allowedExtensions = ['.pdf', '.docx', '.txt'];
+                const validFiles = Array.from(dropped).filter(f => 
+                  allowedExtensions.some(ext => f.name.toLowerCase().endsWith(ext))
+                );
+                
+                if (validFiles.length === 0) {
+                  alert('Only PDF, DOCX, and TXT files are allowed.');
                   return;
                 }
 
-                const formData = new FormData();
-                for (const file of pdfFiles) formData.append('files', file);
+                // Upload files one at a time
+                for (const file of validFiles) {
+                  const formData = new FormData();
+                  formData.append('file', file);
 
-                try {
-                  await api.upload('/documents/upload/', formData);
-                  alert('Files uploaded successfully');
-                } catch (err) {
-                  console.error(err);
-                  alert('Upload failed: ' + (err.message || 'Unknown error'));
+                  try {
+                    await api.upload('/documents/', formData);
+                    alert(`${file.name} uploaded successfully`);
+                  } catch (err) {
+                    console.error(err);
+                    alert(`Upload failed for ${file.name}: ` + (err.message || 'Unknown error'));
+                  }
                 }
               }}
             >
@@ -147,14 +159,14 @@ export default function Dashboard() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
               <p className="text-gray-300">Drag and drop your Policy or Audit Report here</p>
-              <p className="text-xs text-gray-400 mt-2">Supports PDF only (Max 10MB)</p>
+              <p className="text-xs text-gray-400 mt-2">Supports PDF, DOCX, TXT (Max 50MB)</p>
               <button className="mt-6 bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-2 rounded-full font-semibold shadow-lg">
                 <span onClick={handleSelectFiles}>Select Files</span>
               </button>
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".pdf"
+                accept=".pdf,.docx,.txt"
                 multiple
                 className="hidden"
                 onChange={handleFileChange}
