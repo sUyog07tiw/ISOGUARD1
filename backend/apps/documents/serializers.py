@@ -205,3 +205,4 @@ class AnalysisResultListSerializer(serializers.ModelSerializer):
             "completed_at",
         ]
         read_only_fields = fields
+        
