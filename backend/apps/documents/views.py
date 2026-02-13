@@ -223,12 +223,18 @@ class AnalyzeView(APIView):
     
     def post(self, request):
         """Analyze uploaded documents against a specific checklist."""
+        print("\n\ud83d\udce5 ANALYZE REQUEST RECEIVED")
+        
         serializer = AnalyzeRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         
         checklist_id = serializer.validated_data["checklist_id"]
         checklist_title = serializer.validated_data["checklist_title"]
         file_names = serializer.validated_data["files"]
+        
+        print(f"\ud83d\udccb Checklist ID: {checklist_id}")
+        print(f"\ud83d\udccb Checklist Title: {checklist_title}")
+        print(f"\ud83d\udcc1 Files: {file_names}")
         
         try:
             # Find documents by name
@@ -237,7 +243,10 @@ class AnalyzeView(APIView):
                 status=Document.Status.COMPLETED
             )
             
+            print(f"\ud83d\udcc4 Found {documents.count()} processed document(s)")
+            
             if not documents.exists():
+                print("\u274c No processed documents found")
                 return Response(
                     {"error": "No processed documents found with the given file names"},
                     status=status.HTTP_404_NOT_FOUND

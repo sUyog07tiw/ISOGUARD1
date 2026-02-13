@@ -180,6 +180,8 @@ class AnalysisResultSerializer(serializers.ModelSerializer):
             "findings",
             "recommendations",
             "gaps",
+            "comments",
+            "control_scores",
             "error_message",
             "created_at",
             "completed_at",

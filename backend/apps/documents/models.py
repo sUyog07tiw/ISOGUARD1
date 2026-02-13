@@ -189,6 +189,14 @@ class AnalysisResult(models.Model):
         default=list,
         help_text="List of compliance gaps identified"
     )
+    comments = models.JSONField(
+        default=list,
+        help_text="General comments and observations about the audit report"
+    )
+    control_scores = models.JSONField(
+        default=dict,
+        help_text="Individual scores for each control (control_name: score)"
+    )
     
     # Error handling
     error_message = models.TextField(blank=True, null=True)

@@ -150,26 +150,35 @@ ISO27001_CHECKLISTS = {
 
 class DocumentAnalyzer:
     """
-    Analyzes documents against ISO 27001 checklists using AI.
+    Analyzes documents against ISO 27001 checklists using Azure OpenAI.
     """
     
     def __init__(self):
-        self.openai_api_key = os.getenv("OPENAI_API_KEY")
-        self.use_openai = bool(self.openai_api_key)
+        from dotenv import load_dotenv
+        load_dotenv()
         
-        if self.use_openai:
+        self.azure_api_key = os.getenv("AZURE_OPENAI_KEY")
+        self.azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
+        self.azure_deployment = os.getenv("AZURE_DEPLOYMENT")
+        self.use_azure = bool(self.azure_api_key and self.azure_endpoint and self.azure_deployment)
+        
+        if self.use_azure:
             try:
-                import openai
-                self.openai_client = openai.OpenAI(api_key=self.openai_api_key)
-                logger.info("OpenAI client initialized successfully")
+                from openai import AzureOpenAI
+                self.client = AzureOpenAI(
+                    api_key=self.azure_api_key,
+                    azure_endpoint=self.azure_endpoint,
+                    api_version="2024-12-01-preview"
+                )
+                logger.info("Azure OpenAI client initialized successfully")
             except ImportError:
                 logger.warning("OpenAI package not installed. Using mock analysis.")
-                self.use_openai = False
+                self.use_azure = False
             except Exception as e:
-                logger.warning(f"Failed to initialize OpenAI: {e}. Using mock analysis.")
-                self.use_openai = False
+                logger.warning(f"Failed to initialize Azure OpenAI: {e}. Using mock analysis.")
+                self.use_azure = False
         else:
-            logger.info("No OpenAI API key found. Using mock analysis.")
+            logger.info("Azure OpenAI credentials not found. Using mock analysis.")
     
     def analyze(
         self,
@@ -196,20 +205,31 @@ class DocumentAnalyzer:
             checklist_id = analysis_result.checklist_id
             checklist_info = ISO27001_CHECKLISTS.get(checklist_id, {})
             
+            print("\n" + "="*80)
+            print("🔍 ISOGUARD ANALYSIS STARTED")
+            print("="*80)
+            print(f"📋 Checklist: {analysis_result.checklist_title}")
+            print(f"📄 Documents: {len(document_chunks)} chunk(s) to analyze")
+            print(f"🤖 Using: {'Azure OpenAI' if self.use_azure else 'Mock Analysis'}")
+            
             # Combine all chunk content
             combined_content = "\n\n".join([
                 chunk.get("content", "") for chunk in document_chunks
             ])
             
+            print(f"📝 Total content length: {len(combined_content)} characters")
+            
             if not combined_content.strip():
+                print("❌ ERROR: No document content to analyze")
                 analysis_result.status = AnalysisResult.Status.FAILED
                 analysis_result.error_message = "No document content to analyze"
                 analysis_result.save()
                 return False
             
             # Perform analysis
-            if self.use_openai:
-                result = self._analyze_with_openai(
+            print("\n⏳ Sending to AI for analysis...")
+            if self.use_azure:
+                result = self._analyze_with_azure(
                     combined_content,
                     checklist_info,
                     analysis_result.checklist_title
@@ -221,6 +241,44 @@ class DocumentAnalyzer:
                     analysis_result.checklist_title
                 )
             
+            # Log the results
+            print("\n" + "-"*80)
+            print("📊 ANALYSIS RESULTS")
+            print("-"*80)
+            print(f"✅ Compliance Status: {result.get('compliance_status', 'N/A').upper()}")
+            print(f"📈 Compliance Score: {result.get('compliance_score', 0) * 100:.1f}%")
+            print(f"\n📝 Summary:\n   {result.get('summary', 'No summary available')}")
+            
+            if result.get('findings'):
+                print(f"\n🔎 Findings ({len(result.get('findings', []))})")
+                for i, finding in enumerate(result.get('findings', [])[:5], 1):
+                    print(f"   {i}. {finding}")
+            
+            if result.get('recommendations'):
+                print(f"\n💡 Recommendations ({len(result.get('recommendations', []))})")
+                for i, rec in enumerate(result.get('recommendations', [])[:5], 1):
+                    print(f"   {i}. {rec}")
+            
+            if result.get('gaps'):
+                print(f"\n⚠️  Gaps ({len(result.get('gaps', []))})")
+                for i, gap in enumerate(result.get('gaps', [])[:5], 1):
+                    print(f"   {i}. {gap}")
+            
+            if result.get('comments'):
+                print(f"\n💬 Comments ({len(result.get('comments', []))})")
+                for i, comment in enumerate(result.get('comments', [])[:5], 1):
+                    print(f"   {i}. {comment}")
+            
+            if result.get('control_scores'):
+                print(f"\n📋 Control Scores:")
+                for control, score in result.get('control_scores', {}).items():
+                    bar = '█' * int(score * 10) + '░' * (10 - int(score * 10))
+                    print(f"   {control}: [{bar}] {score * 100:.0f}%")
+            
+            print("\n" + "="*80)
+            print("✅ ANALYSIS COMPLETE")
+            print("="*80 + "\n")
+            
             # Update the analysis result
             analysis_result.compliance_status = result.get("compliance_status")
             analysis_result.compliance_score = result.get("compliance_score", 0.0)
@@ -228,6 +286,8 @@ class DocumentAnalyzer:
             analysis_result.findings = result.get("findings", [])
             analysis_result.recommendations = result.get("recommendations", [])
             analysis_result.gaps = result.get("gaps", [])
+            analysis_result.comments = result.get("comments", [])
+            analysis_result.control_scores = result.get("control_scores", {})
             analysis_result.status = AnalysisResult.Status.COMPLETED
             analysis_result.completed_at = timezone.now()
             analysis_result.save()
@@ -235,67 +295,94 @@ class DocumentAnalyzer:
             return True
             
         except Exception as e:
+            print(f"\n❌ ANALYSIS FAILED: {e}")
             logger.error(f"Analysis failed: {e}")
             analysis_result.status = AnalysisResult.Status.FAILED
             analysis_result.error_message = str(e)
             analysis_result.save()
             return False
     
-    def _analyze_with_openai(
+    def _analyze_with_azure(
         self,
         content: str,
         checklist_info: Dict,
         checklist_title: str
     ) -> Dict[str, Any]:
-        """Use OpenAI to analyze the document content."""
+        """Use Azure OpenAI to analyze the document content."""
         
         controls = checklist_info.get("controls", [])
         controls_text = "\n".join([f"- {c}" for c in controls])
         
-        prompt = f"""You are an ISO 27001 compliance expert. Analyze the following document content against the ISO 27001 checklist item: "{checklist_title}".
+        prompt = f"""You are an expert ISO 27001 compliance auditor. Analyze the following audit report/document content against the ISO 27001 checklist item: "{checklist_title}".
 
-The specific controls to check are:
+The specific controls to evaluate are:
 {controls_text}
 
 Document Content:
-{content[:15000]}  # Limit content length for API
+{content[:15000]}
 
-Please provide your analysis in the following JSON format:
+Please perform a thorough compliance analysis and provide your assessment in the following JSON format:
 {{
     "compliance_status": "compliant" | "partial" | "non_compliant" | "not_applicable",
-    "compliance_score": 0.0 to 1.0,
-    "summary": "Brief summary of the compliance assessment",
-    "findings": ["Finding 1", "Finding 2", ...],
-    "recommendations": ["Recommendation 1", "Recommendation 2", ...],
-    "gaps": ["Gap 1", "Gap 2", ...]
+    "compliance_score": 0.0 to 1.0 (where 1.0 is fully compliant),
+    "summary": "Executive summary of the compliance assessment (2-3 sentences)",
+    "findings": [
+        "Specific finding 1 with reference to document content",
+        "Specific finding 2 with reference to document content"
+    ],
+    "recommendations": [
+        "Actionable recommendation 1 to improve compliance",
+        "Actionable recommendation 2 to address gaps"
+    ],
+    "gaps": [
+        "Identified gap 1 in compliance coverage",
+        "Identified gap 2 requiring attention"
+    ],
+    "comments": [
+        "General observation about the audit report quality",
+        "Comment on documentation completeness",
+        "Suggestions for improving the audit report itself"
+    ],
+    "control_scores": {{
+        "control_name": 0.0 to 1.0,
+        "another_control": 0.0 to 1.0
+    }}
 }}
 
-Be specific and reference the actual document content in your findings."""
+Be specific and reference the actual document content in your findings. Provide practical, actionable recommendations. Score each control individually where possible."""
 
         try:
-            response = self.openai_client.chat.completions.create(
-                model="gpt-4o",
+            print(f"   \ud83c\udf10 Calling Azure OpenAI (deployment: {self.azure_deployment})...")
+            
+            response = self.client.chat.completions.create(
+                model=self.azure_deployment,
                 messages=[
                     {
                         "role": "system",
-                        "content": "You are an ISO 27001 compliance auditor. Always respond with valid JSON."
+                        "content": "You are an expert ISO 27001 compliance auditor with deep knowledge of information security management systems. Always respond with valid JSON. Provide detailed, specific, and actionable analysis."
                     },
                     {"role": "user", "content": prompt}
                 ],
                 response_format={"type": "json_object"},
                 temperature=0.3,
-                max_tokens=2000
+                max_completion_tokens=4000
             )
             
+            print(f"   \u2705 Azure OpenAI response received")
+            
             result_text = response.choices[0].message.content
+            print(f"   \ud83d\udcdd Response length: {len(result_text)} characters")
+            
             result = json.loads(result_text)
             
             # Validate and normalize the result
             return self._normalize_result(result)
             
         except Exception as e:
-            logger.error(f"OpenAI analysis failed: {e}")
+            print(f"   \u274c Azure OpenAI error: {e}")
+            logger.error(f"Azure OpenAI analysis failed: {e}")
             # Fall back to mock analysis
+            print(f"   \u21a9\ufe0f  Falling back to mock analysis...")
             return self._analyze_mock(content, checklist_info, checklist_title)
     
     def _analyze_mock(
@@ -305,7 +392,7 @@ Be specific and reference the actual document content in your findings."""
         checklist_title: str
     ) -> Dict[str, Any]:
         """
-        Perform mock analysis when OpenAI is not available.
+        Perform mock analysis when Azure OpenAI is not available.
         Uses keyword matching and basic heuristics.
         """
         
@@ -355,6 +442,27 @@ Be specific and reference the actual document content in your findings."""
         summary += f"Found {keyword_matches} of {len(keywords)} expected topics covered. "
         summary += f"Overall compliance score: {compliance_score:.1%}."
         
+        # Generate comments for the audit report
+        comments = [
+            f"Document analyzed contains {len(content)} characters of content.",
+            f"Keyword coverage: {keyword_ratio:.1%} of expected terms found.",
+        ]
+        if compliance_status == "compliant":
+            comments.append("The audit report demonstrates strong compliance documentation.")
+        elif compliance_status == "partial":
+            comments.append("The audit report shows partial coverage; additional documentation recommended.")
+        else:
+            comments.append("The audit report requires significant enhancement to demonstrate compliance.")
+        
+        # Generate control scores
+        control_scores = {}
+        for control in controls:
+            control_name = control.split()[0] if control else "Unknown"
+            # Simple heuristic: check if control keywords appear in content
+            control_words = control.lower().split()[:4]
+            matches = sum(1 for word in control_words if word in content_lower)
+            control_scores[control_name] = round(matches / max(len(control_words), 1), 2)
+        
         return {
             "compliance_status": compliance_status,
             "compliance_score": round(compliance_score, 2),
@@ -362,6 +470,8 @@ Be specific and reference the actual document content in your findings."""
             "findings": findings[:5],
             "recommendations": recommendations[:5],
             "gaps": gaps[:5],
+            "comments": comments[:5],
+            "control_scores": control_scores,
         }
     
     def _normalize_result(self, result: Dict) -> Dict[str, Any]:
@@ -379,6 +489,19 @@ Be specific and reference the actual document content in your findings."""
         except (ValueError, TypeError):
             score = 0.5
         
+        # Normalize control_scores
+        control_scores = result.get("control_scores", {})
+        if isinstance(control_scores, dict):
+            normalized_scores = {}
+            for ctrl, ctrl_score in control_scores.items():
+                try:
+                    normalized_scores[str(ctrl)] = round(max(0.0, min(1.0, float(ctrl_score))), 2)
+                except (ValueError, TypeError):
+                    normalized_scores[str(ctrl)] = 0.5
+            control_scores = normalized_scores
+        else:
+            control_scores = {}
+        
         return {
             "compliance_status": status,
             "compliance_score": round(score, 2),
@@ -386,4 +509,6 @@ Be specific and reference the actual document content in your findings."""
             "findings": list(result.get("findings", []))[:10],
             "recommendations": list(result.get("recommendations", []))[:10],
             "gaps": list(result.get("gaps", []))[:10],
+            "comments": list(result.get("comments", []))[:10],
+            "control_scores": control_scores,
         }

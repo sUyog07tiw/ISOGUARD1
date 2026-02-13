@@ -17,6 +17,7 @@ export default function Dashboard() {
   const [expandedPanels, setExpandedPanels] = useState({});
   const [uploadedFiles, setUploadedFiles] = useState({});
   const [analyzing, setAnalyzing] = useState({});
+  const [analyzingAll, setAnalyzingAll] = useState(false);
   const navigate = useNavigate();
   const user = getCurrentUser();
   const fileInputRefs = useRef({});
@@ -131,6 +132,72 @@ export default function Dashboard() {
     }
   };
 
+  const handleAnalyzeAll = async () => {
+    // Check if any files are uploaded
+    const totalFiles = Object.values(uploadedFiles).flat().length;
+    if (totalFiles === 0) {
+      alert('Please upload at least one file before analyzing.');
+      return;
+    }
+
+    // Get checklists that have files
+    const checklistsWithFiles = checklists.filter(
+      (c) => uploadedFiles[c.id]?.length > 0
+    );
+
+    if (checklistsWithFiles.length === 0) {
+      alert('No files uploaded for any checklist.');
+      return;
+    }
+
+    setAnalyzingAll(true);
+    const results = [];
+
+    try {
+      // Analyze each checklist that has files
+      for (const checklist of checklistsWithFiles) {
+        setAnalyzing((prev) => ({ ...prev, [checklist.id]: true }));
+        
+        try {
+          const response = await api.post('/documents/analyze/', {
+            checklist_id: checklist.id,
+            checklist_title: checklist.title,
+            files: uploadedFiles[checklist.id],
+          });
+          results.push({ checklist: checklist.title, success: true, response });
+        } catch (err) {
+          console.error(`Analysis failed for ${checklist.title}:`, err);
+          results.push({ checklist: checklist.title, success: false, error: err.message });
+        } finally {
+          setAnalyzing((prev) => ({ ...prev, [checklist.id]: false }));
+        }
+      }
+
+      // Summary of results
+      const successful = results.filter((r) => r.success).length;
+      const failed = results.filter((r) => !r.success).length;
+      
+      if (failed === 0) {
+        alert(`All ${successful} analyses completed successfully! Check the reports section for results.`);
+      } else {
+        alert(`Analysis complete: ${successful} succeeded, ${failed} failed. Check the reports section for results.`);
+      }
+      
+      console.log('All analysis results:', results);
+    } catch (err) {
+      console.error('Analyze all failed:', err);
+      alert('Analysis failed: ' + (err.message || 'Unknown error'));
+    } finally {
+      setAnalyzingAll(false);
+    }
+  };
+
+  // Calculate total uploaded files
+  const totalUploadedFiles = Object.values(uploadedFiles).flat().length;
+  const checklistsWithUploads = Object.keys(uploadedFiles).filter(
+    (key) => uploadedFiles[key]?.length > 0
+  ).length;
+
   const complianceStats = [
     { label: "Overall Score", value: "68%", color: "text-red-400" },
     { label: "Annex A Controls", value: "42/93", color: "text-red-300" },
@@ -197,8 +264,40 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Upload Section with Accordion */}
           <section className="lg:col-span-2 bg-gradient-to-br from-gray-900 to-gray-900/70 p-8 rounded-3xl border border-red-500/30 shadow-2xl">
-            <h3 className="text-xl font-bold text-white mb-2">Validate New Evidence</h3>
-            <p className="text-sm text-red-200 mb-6">Upload documents for each ISO 27001 checklist item below.</p>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-xl font-bold text-white">Validate New Evidence</h3>
+              <button
+                onClick={handleAnalyzeAll}
+                disabled={analyzingAll || totalUploadedFiles === 0}
+                className={`px-5 py-2 rounded-full font-bold text-sm shadow-xl transition-all flex items-center gap-2 ${
+                  analyzingAll || totalUploadedFiles === 0
+                    ? 'bg-gray-600 cursor-not-allowed text-gray-400'
+                    : 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white'
+                }`}
+              >
+                {analyzingAll ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Analyzing All...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    Analyze All Checklists
+                  </>
+                )}
+              </button>
+            </div>
+            <p className="text-sm text-red-200 mb-2">Upload documents for each ISO 27001 checklist item below.</p>
+            <p className="text-xs text-gray-400 mb-6">
+              <span className="font-semibold text-white">{totalUploadedFiles}</span> file(s) uploaded across{' '}
+              <span className="font-semibold text-white">{checklistsWithUploads}</span> checklist(s)
+            </p>
             
             {/* Accordion Panels */}
             <div className="space-y-3">

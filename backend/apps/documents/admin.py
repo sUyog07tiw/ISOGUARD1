@@ -1,5 +1,7 @@
 from django.contrib import admin
-from .models import Document, DocumentChunk
+from django.utils.html import format_html
+import json
+from .models import Document, DocumentChunk, AnalysisResult
 
 
 class DocumentChunkInline(admin.TabularInline):
@@ -94,3 +96,188 @@ class DocumentChunkAdmin(admin.ModelAdmin):
             "fields": ("char_count", "word_count", "created_at")
         }),
     )
+
+
+@admin.register(AnalysisResult)
+class AnalysisResultAdmin(admin.ModelAdmin):
+    list_display = [
+        "id",
+        "checklist_title",
+        "compliance_status_badge",
+        "compliance_score_display",
+        "status",
+        "created_at",
+        "analyzed_by",
+    ]
+    list_filter = ["status", "compliance_status", "checklist_id", "created_at"]
+    search_fields = ["checklist_title", "summary", "id"]
+    readonly_fields = [
+        "id",
+        "compliance_score_display",
+        "compliance_status_badge",
+        "findings_display",
+        "recommendations_display",
+        "gaps_display",
+        "comments_display",
+        "control_scores_display",
+        "created_at",
+        "completed_at",
+        "documents_list",
+    ]
+    filter_horizontal = ["documents"]
+    
+    fieldsets = (
+        (None, {
+            "fields": ("id", "checklist_id", "checklist_title")
+        }),
+        ("Analyzed Documents", {
+            "fields": ("documents_list", "documents"),
+            "description": "Documents that were analyzed"
+        }),
+        ("Status", {
+            "fields": ("status", "error_message")
+        }),
+        ("Compliance Result", {
+            "fields": ("compliance_status_badge", "compliance_status", "compliance_score_display", "compliance_score"),
+            "classes": ("wide",)
+        }),
+        ("AI Analysis - Summary", {
+            "fields": ("summary",),
+            "classes": ("wide",)
+        }),
+        ("AI Analysis - Comments", {
+            "fields": ("comments_display",),
+            "classes": ("wide", "collapse"),
+            "description": "General comments and observations from AI analysis"
+        }),
+        ("AI Analysis - Findings", {
+            "fields": ("findings_display",),
+            "classes": ("wide", "collapse"),
+        }),
+        ("AI Analysis - Recommendations", {
+            "fields": ("recommendations_display",),
+            "classes": ("wide", "collapse"),
+        }),
+        ("AI Analysis - Gaps", {
+            "fields": ("gaps_display",),
+            "classes": ("wide", "collapse"),
+        }),
+        ("AI Analysis - Control Scores", {
+            "fields": ("control_scores_display",),
+            "classes": ("wide", "collapse"),
+            "description": "Individual scores for each control area"
+        }),
+        ("Raw Data (JSON)", {
+            "fields": ("findings", "recommendations", "gaps", "comments", "control_scores"),
+            "classes": ("collapse",),
+            "description": "Raw JSON data stored in database"
+        }),
+        ("Timestamps", {
+            "fields": ("created_at", "completed_at")
+        }),
+        ("User", {
+            "fields": ("analyzed_by",)
+        }),
+    )
+    
+    def compliance_status_badge(self, obj):
+        """Display compliance status as a colored badge."""
+        if not obj.compliance_status:
+            return format_html('<span style="color: gray;">Pending</span>')
+        
+        colors = {
+            "compliant": "#28a745",       # Green
+            "partial": "#ffc107",          # Yellow
+            "non_compliant": "#dc3545",    # Red
+            "not_applicable": "#6c757d",   # Gray
+        }
+        color = colors.get(obj.compliance_status, "#6c757d")
+        label = obj.get_compliance_status_display()
+        return format_html(
+            '<span style="background-color: {}; color: white; padding: 3px 8px; border-radius: 4px; font-weight: bold;">{}</span>',
+            color, label
+        )
+    compliance_status_badge.short_description = "Compliance"
+    compliance_status_badge.admin_order_field = "compliance_status"
+    
+    def compliance_score_display(self, obj):
+        """Display compliance score as a percentage with color."""
+        score = obj.compliance_score * 100
+        if score >= 80:
+            color = "#28a745"
+        elif score >= 50:
+            color = "#ffc107"
+        else:
+            color = "#dc3545"
+        return format_html(
+            '<span style="color: {}; font-weight: bold;">{:.1f}%</span>',
+            color, score
+        )
+    compliance_score_display.short_description = "Score"
+    compliance_score_display.admin_order_field = "compliance_score"
+    
+    def documents_list(self, obj):
+        """Display linked documents as a list."""
+        docs = obj.documents.all()
+        if not docs:
+            return "No documents"
+        return format_html("<br>".join([f"• {doc.name}" for doc in docs]))
+    documents_list.short_description = "Analyzed Documents"
+    
+    def _format_json_list(self, data):
+        """Format a JSON list as HTML."""
+        if not data:
+            return format_html('<span style="color: gray;">No data</span>')
+        
+        if isinstance(data, list):
+            items = "".join([f"<li style='margin-bottom: 8px;'>{item}</li>" for item in data])
+            return format_html(f"<ul style='margin: 0; padding-left: 20px;'>{items}</ul>")
+        return format_html("<pre>{}</pre>", json.dumps(data, indent=2))
+    
+    def _format_json_dict(self, data):
+        """Format a JSON dict as HTML table."""
+        if not data:
+            return format_html('<span style="color: gray;">No data</span>')
+        
+        if isinstance(data, dict):
+            rows = ""
+            for key, value in data.items():
+                if isinstance(value, (int, float)):
+                    score = float(value) * 100
+                    if score >= 80:
+                        color = "#28a745"
+                    elif score >= 50:
+                        color = "#ffc107"
+                    else:
+                        color = "#dc3545"
+                    value_html = f'<span style="color: {color}; font-weight: bold;">{score:.1f}%</span>'
+                else:
+                    value_html = str(value)
+                rows += f"<tr><td style='padding: 4px 8px; border: 1px solid #ddd;'><strong>{key}</strong></td><td style='padding: 4px 8px; border: 1px solid #ddd;'>{value_html}</td></tr>"
+            return format_html(f"<table style='border-collapse: collapse; width: 100%;'>{rows}</table>")
+        return format_html("<pre>{}</pre>", json.dumps(data, indent=2))
+    
+    def findings_display(self, obj):
+        return self._format_json_list(obj.findings)
+    findings_display.short_description = "Findings"
+    
+    def recommendations_display(self, obj):
+        return self._format_json_list(obj.recommendations)
+    recommendations_display.short_description = "Recommendations"
+    
+    def gaps_display(self, obj):
+        return self._format_json_list(obj.gaps)
+    gaps_display.short_description = "Gaps"
+    
+    def comments_display(self, obj):
+        return self._format_json_list(obj.comments)
+    comments_display.short_description = "AI Comments"
+    
+    def control_scores_display(self, obj):
+        return self._format_json_dict(obj.control_scores)
+    control_scores_display.short_description = "Control Scores"
+    
+    def has_add_permission(self, request):
+        """Disable adding analysis results manually - they should come from API."""
+        return False
+
