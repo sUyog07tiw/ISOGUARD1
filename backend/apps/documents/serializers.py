@@ -135,3 +135,73 @@ class DocumentReprocessSerializer(serializers.Serializer):
         max_value=10000,
         help_text="Maximum chunk size in characters"
     )
+
+
+class AnalyzeRequestSerializer(serializers.Serializer):
+    """Serializer for analysis request."""
+    
+    checklist_id = serializers.IntegerField(
+        help_text="ID of the ISO 27001 checklist item"
+    )
+    checklist_title = serializers.CharField(
+        max_length=500,
+        help_text="Title of the checklist item"
+    )
+    files = serializers.ListField(
+        child=serializers.CharField(),
+        help_text="List of uploaded file names"
+    )
+    
+    def validate_checklist_id(self, value):
+        """Validate that the checklist ID is valid."""
+        if value < 1 or value > 5:  # Currently support 5 checklists
+            raise serializers.ValidationError(
+                "Invalid checklist ID. Must be between 1 and 5."
+            )
+        return value
+
+
+class AnalysisResultSerializer(serializers.ModelSerializer):
+    """Serializer for analysis results."""
+    
+    documents = DocumentListSerializer(many=True, read_only=True)
+    
+    class Meta:
+        from .models import AnalysisResult
+        model = AnalysisResult
+        fields = [
+            "id",
+            "checklist_id",
+            "checklist_title",
+            "status",
+            "compliance_status",
+            "compliance_score",
+            "summary",
+            "findings",
+            "recommendations",
+            "gaps",
+            "error_message",
+            "created_at",
+            "completed_at",
+            "documents",
+        ]
+        read_only_fields = fields
+
+
+class AnalysisResultListSerializer(serializers.ModelSerializer):
+    """Lightweight serializer for listing analysis results."""
+    
+    class Meta:
+        from .models import AnalysisResult
+        model = AnalysisResult
+        fields = [
+            "id",
+            "checklist_id",
+            "checklist_title",
+            "status",
+            "compliance_status",
+            "compliance_score",
+            "created_at",
+            "completed_at",
+        ]
+        read_only_fields = fields

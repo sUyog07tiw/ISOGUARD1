@@ -2,10 +2,11 @@ import logging
 from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
 
-from .models import Document, DocumentChunk
+from .models import Document, DocumentChunk, AnalysisResult
 from .serializers import (
     DocumentSerializer,
     DocumentListSerializer,
@@ -13,8 +14,11 @@ from .serializers import (
     DocumentChunkListSerializer,
     DocumentUploadSerializer,
     DocumentReprocessSerializer,
+    AnalyzeRequestSerializer,
+    AnalysisResultSerializer,
+    AnalysisResultListSerializer,
 )
-from .utils import DocumentProcessor, get_file_type
+from .utils import DocumentProcessor, get_file_type, DocumentAnalyzer
 
 logger = logging.getLogger(__name__)
 
@@ -205,3 +209,126 @@ class DocumentChunkViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = queryset.filter(content__icontains=search)
         
         return queryset.select_related("document")
+
+
+class AnalyzeView(APIView):
+    """
+    API endpoint for analyzing documents against ISO 27001 checklists.
+    
+    POST /documents/analyze/
+    """
+    
+    permission_classes = [permissions.AllowAny]  # Change to IsAuthenticated in production
+    parser_classes = [JSONParser]
+    
+    def post(self, request):
+        """Analyze uploaded documents against a specific checklist."""
+        serializer = AnalyzeRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        checklist_id = serializer.validated_data["checklist_id"]
+        checklist_title = serializer.validated_data["checklist_title"]
+        file_names = serializer.validated_data["files"]
+        
+        try:
+            # Find documents by name
+            documents = Document.objects.filter(
+                name__in=file_names,
+                status=Document.Status.COMPLETED
+            )
+            
+            if not documents.exists():
+                return Response(
+                    {"error": "No processed documents found with the given file names"},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            # Get all chunks from the documents
+            document_chunks = []
+            for doc in documents:
+                chunks = doc.chunks.all()
+                for chunk in chunks:
+                    document_chunks.append({
+                        "content": chunk.content,
+                        "heading": chunk.heading,
+                        "document_name": doc.name,
+                    })
+            
+            if not document_chunks:
+                return Response(
+                    {"error": "No document chunks found to analyze"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Create analysis result
+            analysis_result = AnalysisResult.objects.create(
+                checklist_id=checklist_id,
+                checklist_title=checklist_title,
+                status=AnalysisResult.Status.PENDING,
+                analyzed_by=request.user if request.user.is_authenticated else None
+            )
+            analysis_result.documents.set(documents)
+            
+            # Perform the analysis
+            analyzer = DocumentAnalyzer()
+            success = analyzer.analyze(analysis_result, document_chunks)
+            
+            # Refresh and return result
+            analysis_result.refresh_from_db()
+            response_serializer = AnalysisResultSerializer(analysis_result)
+            
+            if success:
+                return Response(
+                    response_serializer.data,
+                    status=status.HTTP_200_OK
+                )
+            else:
+                return Response(
+                    response_serializer.data,
+                    status=status.HTTP_422_UNPROCESSABLE_ENTITY
+                )
+                
+        except Exception as e:
+            logger.error(f"Analysis failed: {e}")
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class AnalysisResultViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoints for viewing analysis results.
+    
+    Supports:
+    - List analysis results (GET /analyses/)
+    - Retrieve analysis result (GET /analyses/{id}/)
+    """
+    
+    queryset = AnalysisResult.objects.all()
+    permission_classes = [permissions.AllowAny]  # Change to IsAuthenticated in production
+    
+    def get_serializer_class(self):
+        if self.action == "list":
+            return AnalysisResultListSerializer
+        return AnalysisResultSerializer
+    
+    def get_queryset(self):
+        queryset = AnalysisResult.objects.all()
+        
+        # Filter by checklist
+        checklist_id = self.request.query_params.get("checklist_id")
+        if checklist_id:
+            queryset = queryset.filter(checklist_id=checklist_id)
+        
+        # Filter by status
+        status_filter = self.request.query_params.get("status")
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+        
+        # Filter by compliance status
+        compliance_status = self.request.query_params.get("compliance_status")
+        if compliance_status:
+            queryset = queryset.filter(compliance_status=compliance_status)
+        
+        return queryset.prefetch_related("documents")

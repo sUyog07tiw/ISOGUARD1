@@ -4,50 +4,130 @@ import logo from "../../assets/Logo.jpg";
 import { logout, getCurrentUser } from "../../utils/auth";
 import api from "../../utils/api";
 
+const checklists = [
+  { id: 1, title: "A.5 Information Security Policies", description: "Policies for information security management direction and support." },
+  { id: 2, title: "A.6 Organization of Information Security", description: "Internal organization and mobile devices/teleworking controls." },
+  { id: 3, title: "A.7 Human Resource Security", description: "Prior to, during, and termination of employment security measures." },
+  { id: 4, title: "A.8 Asset Management", description: "Responsibility for assets, information classification, and media handling." },
+  { id: 5, title: "A.9 Access Control", description: "Business requirements, user access management, and system access controls." },
+];
 
 export default function Dashboard() {
-  const [dragActive, setDragActive] = useState(false);
+  const [dragActive, setDragActive] = useState({});
+  const [expandedPanels, setExpandedPanels] = useState({});
+  const [uploadedFiles, setUploadedFiles] = useState({});
+  const [analyzing, setAnalyzing] = useState({});
   const navigate = useNavigate();
   const user = getCurrentUser();
+  const fileInputRefs = useRef({});
 
   const handleLogout = () => {
     logout();
     navigate("/login", { replace: true });
   };
 
-  const fileInputRef = useRef(null);
-
-  const handleSelectFiles = () => {
-    if (fileInputRef.current) fileInputRef.current.click();
+  const togglePanel = (id) => {
+    setExpandedPanels((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const handleFileChange = async (e) => {
+  const handleSelectFiles = (checklistId) => {
+    if (fileInputRefs.current[checklistId]) {
+      fileInputRefs.current[checklistId].click();
+    }
+  };
+
+  const handleFileChange = async (e, checklistId) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    // Allow PDF, DOCX, TXT files
     const allowedExtensions = ['.pdf', '.docx', '.txt'];
-    const validFiles = Array.from(files).filter(f => 
+    const validFiles = Array.from(files).filter(f =>
       allowedExtensions.some(ext => f.name.toLowerCase().endsWith(ext))
     );
-    
+
     if (validFiles.length === 0) {
       alert('Only PDF, DOCX, and TXT files are allowed.');
       return;
     }
 
-    // Upload files one at a time (backend expects single file)
     for (const file of validFiles) {
       const formData = new FormData();
       formData.append('file', file);
+      formData.append('checklist_id', checklistId);
 
       try {
         await api.upload('/documents/', formData);
-        alert(`${file.name} uploaded successfully`);
+        setUploadedFiles((prev) => ({
+          ...prev,
+          [checklistId]: [...(prev[checklistId] || []), file.name],
+        }));
+        alert(`${file.name} uploaded successfully for checklist ${checklistId}`);
       } catch (err) {
         console.error(err);
         alert(`Upload failed for ${file.name}: ` + (err.message || 'Unknown error'));
       }
+    }
+  };
+
+  const handleDrop = async (e, checklistId) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive((prev) => ({ ...prev, [checklistId]: false }));
+    
+    const dropped = e.dataTransfer.files;
+    if (!dropped || dropped.length === 0) return;
+
+    const allowedExtensions = ['.pdf', '.docx', '.txt'];
+    const validFiles = Array.from(dropped).filter(f =>
+      allowedExtensions.some(ext => f.name.toLowerCase().endsWith(ext))
+    );
+
+    if (validFiles.length === 0) {
+      alert('Only PDF, DOCX, and TXT files are allowed.');
+      return;
+    }
+
+    for (const file of validFiles) {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('checklist_id', checklistId);
+
+      try {
+        await api.upload('/documents/', formData);
+        setUploadedFiles((prev) => ({
+          ...prev,
+          [checklistId]: [...(prev[checklistId] || []), file.name],
+        }));
+        alert(`${file.name} uploaded successfully for checklist ${checklistId}`);
+      } catch (err) {
+        console.error(err);
+        alert(`Upload failed for ${file.name}: ` + (err.message || 'Unknown error'));
+      }
+    }
+  };
+
+  const handleAnalyzeChecklist = async (checklistId) => {
+    const files = uploadedFiles[checklistId];
+    if (!files || files.length === 0) {
+      alert('Please upload at least one file before analyzing.');
+      return;
+    }
+
+    setAnalyzing((prev) => ({ ...prev, [checklistId]: true }));
+    try {
+      const checklist = checklists.find((c) => c.id === checklistId);
+      const response = await api.post('/documents/analyze/', {
+        checklist_id: checklistId,
+        checklist_title: checklist?.title,
+        files: files,
+      });
+      alert(`Analysis complete for ${checklist?.title}! Check the reports section for results.`);
+      console.log('Analysis response:', response);
+    } catch (err) {
+      console.error(err);
+      alert('Analysis failed: ' + (err.message || 'Unknown error'));
+    } finally {
+      setAnalyzing((prev) => ({ ...prev, [checklistId]: false }));
     }
   };
 
@@ -115,79 +195,139 @@ export default function Dashboard() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Upload Section */}
+          {/* Upload Section with Accordion */}
           <section className="lg:col-span-2 bg-gradient-to-br from-gray-900 to-gray-900/70 p-8 rounded-3xl border border-red-500/30 shadow-2xl">
             <h3 className="text-xl font-bold text-white mb-2">Validate New Evidence</h3>
-            <p className="text-sm text-red-200 mb-6">Drop audit evidence and ISOGUARD highlights every clause, control, and risk.</p>
-            <div
-              className={`flex flex-col items-center justify-center p-12 rounded-2xl transition-all border-2 ${dragActive ? 'border-red-500/70 bg-red-500/10' : 'border-white/10 bg-gray-900'}`}
-              onDragEnter={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setDragActive(true);
-              }}
-              onDragOver={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setDragActive(true);
-              }}
-              onDragLeave={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setDragActive(false);
-              }}
-              onDrop={async (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setDragActive(false);
-                const dropped = e.dataTransfer.files;
-                if (!dropped || dropped.length === 0) return;
+            <p className="text-sm text-red-200 mb-6">Upload documents for each ISO 27001 checklist item below.</p>
+            
+            {/* Accordion Panels */}
+            <div className="space-y-3">
+              {checklists.map((checklist) => (
+                <div key={checklist.id} className="border border-white/20 rounded-xl overflow-hidden">
+                  {/* Panel Header */}
+                  <button
+                    onClick={() => togglePanel(checklist.id)}
+                    className="w-full flex items-center justify-between p-4 bg-gray-800/80 hover:bg-gray-700/80 transition-colors text-left"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="w-8 h-8 flex items-center justify-center bg-red-600 rounded-full text-sm font-bold">
+                        {checklist.id}
+                      </span>
+                      <div>
+                        <p className="font-semibold text-white">{checklist.title}</p>
+                        <p className="text-xs text-gray-400">{checklist.description}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {uploadedFiles[checklist.id]?.length > 0 && (
+                        <span className="text-xs bg-green-600 px-2 py-1 rounded-full">
+                          {uploadedFiles[checklist.id].length} file(s)
+                        </span>
+                      )}
+                      <svg
+                        className={`w-5 h-5 text-gray-400 transition-transform ${expandedPanels[checklist.id] ? 'rotate-180' : ''}`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </button>
 
-                // Allow PDF, DOCX, TXT files
-                const allowedExtensions = ['.pdf', '.docx', '.txt'];
-                const validFiles = Array.from(dropped).filter(f => 
-                  allowedExtensions.some(ext => f.name.toLowerCase().endsWith(ext))
-                );
-                
-                if (validFiles.length === 0) {
-                  alert('Only PDF, DOCX, and TXT files are allowed.');
-                  return;
-                }
+                  {/* Panel Content */}
+                  {expandedPanels[checklist.id] && (
+                    <div className="p-4 bg-gray-900/50">
+                      <div
+                        className={`flex flex-col items-center justify-center p-6 rounded-xl transition-all border-2 ${
+                          dragActive[checklist.id] ? 'border-red-500/70 bg-red-500/10' : 'border-white/10 bg-gray-800/50'
+                        }`}
+                        onDragEnter={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setDragActive((prev) => ({ ...prev, [checklist.id]: true }));
+                        }}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setDragActive((prev) => ({ ...prev, [checklist.id]: true }));
+                        }}
+                        onDragLeave={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setDragActive((prev) => ({ ...prev, [checklist.id]: false }));
+                        }}
+                        onDrop={(e) => handleDrop(e, checklist.id)}
+                      >
+                        <svg className="w-8 h-8 text-red-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <p className="text-sm text-gray-300">Drag & drop files here</p>
+                        <p className="text-xs text-gray-500 mt-1">PDF, DOCX, TXT (Max 50MB)</p>
+                        <button
+                          onClick={() => handleSelectFiles(checklist.id)}
+                          className="mt-3 bg-gradient-to-r from-red-600 to-red-700 text-white px-4 py-1.5 rounded-full text-sm font-semibold shadow-lg hover:from-red-700 hover:to-red-800 transition-all"
+                        >
+                          Select Files
+                        </button>
+                        <input
+                          ref={(el) => (fileInputRefs.current[checklist.id] = el)}
+                          type="file"
+                          accept=".pdf,.docx,.txt"
+                          multiple
+                          className="hidden"
+                          onChange={(e) => handleFileChange(e, checklist.id)}
+                        />
+                      </div>
 
-                // Upload files one at a time
-                for (const file of validFiles) {
-                  const formData = new FormData();
-                  formData.append('file', file);
+                      {/* Uploaded Files List */}
+                      {uploadedFiles[checklist.id]?.length > 0 && (
+                        <div className="mt-3 space-y-1">
+                          <p className="text-xs text-gray-400 font-semibold">Uploaded:</p>
+                          {uploadedFiles[checklist.id].map((fileName, idx) => (
+                            <div key={idx} className="flex items-center gap-2 text-sm text-green-400">
+                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                              <span>{fileName}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
 
-                  try {
-                    await api.upload('/documents/', formData);
-                    alert(`${file.name} uploaded successfully`);
-                  } catch (err) {
-                    console.error(err);
-                    alert(`Upload failed for ${file.name}: ` + (err.message || 'Unknown error'));
-                  }
-                }
-              }}
-            >
-              <svg className="w-12 h-12 text-red-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <p className="text-gray-300">Drag and drop your Policy or Audit Report here</p>
-              <p className="text-xs text-gray-400 mt-2">Supports PDF, DOCX, TXT (Max 50MB)</p>
-              <button
-                onClick={handleSelectFiles}
-                className="mt-6 bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-2 rounded-full font-semibold shadow-lg"
-              >
-                Select Files
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".pdf,.docx,.txt"
-                multiple
-                className="hidden"
-                onChange={handleFileChange}
-              />
+                      {/* Analyze Button for this checklist */}
+                      <div className="mt-4 flex justify-end">
+                        <button
+                          onClick={() => handleAnalyzeChecklist(checklist.id)}
+                          disabled={analyzing[checklist.id] || !uploadedFiles[checklist.id]?.length}
+                          className={`px-4 py-2 rounded-full text-sm font-semibold shadow-lg transition-all flex items-center gap-2 ${
+                            analyzing[checklist.id] || !uploadedFiles[checklist.id]?.length
+                              ? 'bg-gray-600 cursor-not-allowed text-gray-400'
+                              : 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white'
+                          }`}
+                        >
+                          {analyzing[checklist.id] ? (
+                            <>
+                              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                              </svg>
+                              Analyzing...
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                              </svg>
+                              Analyze with AI
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           </section>
 

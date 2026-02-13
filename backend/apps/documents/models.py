@@ -121,3 +121,99 @@ class DocumentChunk(models.Model):
         self.char_count = len(self.content)
         self.word_count = len(self.content.split())
         super().save(*args, **kwargs)
+
+
+class AnalysisResult(models.Model):
+    """
+    Stores AI analysis results for compliance checking against ISO 27001 checklists.
+    """
+    
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pending"
+        PROCESSING = "processing", "Processing"
+        COMPLETED = "completed", "Completed"
+        FAILED = "failed", "Failed"
+    
+    class ComplianceStatus(models.TextChoices):
+        COMPLIANT = "compliant", "Compliant"
+        PARTIAL = "partial", "Partially Compliant"
+        NON_COMPLIANT = "non_compliant", "Non-Compliant"
+        NOT_APPLICABLE = "not_applicable", "Not Applicable"
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    # Link to document(s) analyzed
+    documents = models.ManyToManyField(
+        Document,
+        related_name="analysis_results",
+        blank=True
+    )
+    
+    # Checklist info
+    checklist_id = models.IntegerField(help_text="ID of the ISO 27001 checklist item")
+    checklist_title = models.CharField(max_length=500, help_text="Title of the checklist item")
+    
+    # Analysis status
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING
+    )
+    
+    # Compliance result
+    compliance_status = models.CharField(
+        max_length=20,
+        choices=ComplianceStatus.choices,
+        blank=True,
+        null=True
+    )
+    compliance_score = models.FloatField(
+        default=0.0,
+        help_text="Compliance score from 0.0 to 1.0"
+    )
+    
+    # AI analysis output
+    summary = models.TextField(
+        blank=True,
+        help_text="AI-generated summary of the analysis"
+    )
+    findings = models.JSONField(
+        default=list,
+        help_text="List of specific findings"
+    )
+    recommendations = models.JSONField(
+        default=list,
+        help_text="List of recommendations for improvement"
+    )
+    gaps = models.JSONField(
+        default=list,
+        help_text="List of compliance gaps identified"
+    )
+    
+    # Error handling
+    error_message = models.TextField(blank=True, null=True)
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(blank=True, null=True)
+    
+    # User who initiated analysis
+    analyzed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="analyses"
+    )
+    
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["checklist_id"]),
+            models.Index(fields=["status"]),
+            models.Index(fields=["compliance_status"]),
+            models.Index(fields=["created_at"]),
+        ]
+    
+    def __str__(self):
+        return f"Analysis for {self.checklist_title} - {self.compliance_status or 'Pending'}"

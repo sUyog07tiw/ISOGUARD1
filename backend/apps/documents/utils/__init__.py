@@ -1,6 +1,7 @@
 from .extraction import extract_text, get_file_type, TextExtractionError
 from .chunking import SemanticChunker, semantic_chunk, Chunk
 from .processor import DocumentProcessor, process_document
+from .analyzer import DocumentAnalyzer, ISO27001_CHECKLISTS
 
 __all__ = [
     "extract_text",
@@ -11,4 +12,6 @@ __all__ = [
     "Chunk",
     "DocumentProcessor",
     "process_document",
+    "DocumentAnalyzer",
+    "ISO27001_CHECKLISTS",
 ]
