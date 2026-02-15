@@ -18,6 +18,7 @@ export default function Dashboard() {
   const [uploadedFiles, setUploadedFiles] = useState({});
   const [analyzing, setAnalyzing] = useState({});
   const [analyzingAll, setAnalyzingAll] = useState(false);
+  const [analysisResults, setAnalysisResults] = useState({});
   const navigate = useNavigate();
   const user = getCurrentUser();
   const fileInputRefs = useRef({});
@@ -41,13 +42,13 @@ export default function Dashboard() {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    const allowedExtensions = ['.pdf', '.docx', '.txt'];
+    const allowedExtensions = ['.pdf'];
     const validFiles = Array.from(files).filter(f =>
       allowedExtensions.some(ext => f.name.toLowerCase().endsWith(ext))
     );
 
     if (validFiles.length === 0) {
-      alert('Only PDF, DOCX, and TXT files are allowed.');
+      alert('Only PDF files are allowed.');
       return;
     }
 
@@ -57,11 +58,13 @@ export default function Dashboard() {
       formData.append('checklist_id', checklistId);
 
       try {
-        await api.upload('/documents/', formData);
+        await api.upload('/files/', formData);
         setUploadedFiles((prev) => ({
           ...prev,
           [checklistId]: [...(prev[checklistId] || []), file.name],
         }));
+        // Auto-expand the panel to show uploaded file
+        setExpandedPanels((prev) => ({ ...prev, [checklistId]: true }));
         alert(`${file.name} uploaded successfully for checklist ${checklistId}`);
       } catch (err) {
         console.error(err);
@@ -78,13 +81,13 @@ export default function Dashboard() {
     const dropped = e.dataTransfer.files;
     if (!dropped || dropped.length === 0) return;
 
-    const allowedExtensions = ['.pdf', '.docx', '.txt'];
+    const allowedExtensions = ['.pdf'];
     const validFiles = Array.from(dropped).filter(f =>
       allowedExtensions.some(ext => f.name.toLowerCase().endsWith(ext))
     );
 
     if (validFiles.length === 0) {
-      alert('Only PDF, DOCX, and TXT files are allowed.');
+      alert('Only PDF files are allowed.');
       return;
     }
 
@@ -94,11 +97,13 @@ export default function Dashboard() {
       formData.append('checklist_id', checklistId);
 
       try {
-        await api.upload('/documents/', formData);
+        await api.upload('/files/', formData);
         setUploadedFiles((prev) => ({
           ...prev,
           [checklistId]: [...(prev[checklistId] || []), file.name],
         }));
+        // Auto-expand the panel to show uploaded file
+        setExpandedPanels((prev) => ({ ...prev, [checklistId]: true }));
         alert(`${file.name} uploaded successfully for checklist ${checklistId}`);
       } catch (err) {
         console.error(err);
@@ -117,12 +122,19 @@ export default function Dashboard() {
     setAnalyzing((prev) => ({ ...prev, [checklistId]: true }));
     try {
       const checklist = checklists.find((c) => c.id === checklistId);
-      const response = await api.post('/documents/analyze/', {
+      const response = await api.post('/analyze/', {
         checklist_id: checklistId,
         checklist_title: checklist?.title,
         files: files,
       });
-      alert(`Analysis complete for ${checklist?.title}! Check the reports section for results.`);
+      
+      // Store the analysis result
+      setAnalysisResults((prev) => ({ ...prev, [checklistId]: response }));
+      
+      // Show success with score
+      const score = ((response.compliance_score || 0) * 100).toFixed(0);
+      const status = response.compliance_status || 'completed';
+      alert(`Analysis complete for ${checklist?.title}!\n\nCompliance Score: ${score}%\nStatus: ${status.replace('_', ' ').toUpperCase()}\n\nView detailed results in the Reports section.`);
       console.log('Analysis response:', response);
     } catch (err) {
       console.error(err);
@@ -159,15 +171,17 @@ export default function Dashboard() {
         setAnalyzing((prev) => ({ ...prev, [checklist.id]: true }));
         
         try {
-          const response = await api.post('/documents/analyze/', {
+          const response = await api.post('/analyze/', {
             checklist_id: checklist.id,
             checklist_title: checklist.title,
             files: uploadedFiles[checklist.id],
           });
-          results.push({ checklist: checklist.title, success: true, response });
+          results.push({ checklist: checklist.title, checklistId: checklist.id, success: true, response });
+          // Store individual result
+          setAnalysisResults((prev) => ({ ...prev, [checklist.id]: response }));
         } catch (err) {
           console.error(`Analysis failed for ${checklist.title}:`, err);
-          results.push({ checklist: checklist.title, success: false, error: err.message });
+          results.push({ checklist: checklist.title, checklistId: checklist.id, success: false, error: err.message });
         } finally {
           setAnalyzing((prev) => ({ ...prev, [checklist.id]: false }));
         }
@@ -177,10 +191,16 @@ export default function Dashboard() {
       const successful = results.filter((r) => r.success).length;
       const failed = results.filter((r) => !r.success).length;
       
+      // Calculate average score
+      const successfulResults = results.filter((r) => r.success);
+      const avgScore = successfulResults.length > 0
+        ? (successfulResults.reduce((sum, r) => sum + (r.response?.compliance_score || 0), 0) / successfulResults.length * 100).toFixed(0)
+        : 0;
+      
       if (failed === 0) {
-        alert(`All ${successful} analyses completed successfully! Check the reports section for results.`);
+        alert(`All ${successful} analyses completed!\n\nAverage Compliance Score: ${avgScore}%\n\nView detailed results in the Reports section.`);
       } else {
-        alert(`Analysis complete: ${successful} succeeded, ${failed} failed. Check the reports section for results.`);
+        alert(`Analysis complete: ${successful} succeeded, ${failed} failed.\n\nAverage Score: ${avgScore}%\n\nView results in the Reports section.`);
       }
       
       console.log('All analysis results:', results);
@@ -362,7 +382,7 @@ export default function Dashboard() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
                         <p className="text-sm text-gray-300">Drag & drop files here</p>
-                        <p className="text-xs text-gray-500 mt-1">PDF, DOCX, TXT (Max 50MB)</p>
+                        <p className="text-xs text-gray-500 mt-1">PDF only (Max 50MB)</p>
                         <button
                           onClick={() => handleSelectFiles(checklist.id)}
                           className="mt-3 bg-gradient-to-r from-red-600 to-red-700 text-white px-4 py-1.5 rounded-full text-sm font-semibold shadow-lg hover:from-red-700 hover:to-red-800 transition-all"
@@ -372,7 +392,7 @@ export default function Dashboard() {
                         <input
                           ref={(el) => (fileInputRefs.current[checklist.id] = el)}
                           type="file"
-                          accept=".pdf,.docx,.txt"
+                          accept=".pdf"
                           multiple
                           className="hidden"
                           onChange={(e) => handleFileChange(e, checklist.id)}
@@ -423,6 +443,31 @@ export default function Dashboard() {
                           )}
                         </button>
                       </div>
+
+                      {/* Analysis Result Preview */}
+                      {analysisResults[checklist.id] && (
+                        <div className="mt-4 p-4 rounded-xl bg-gradient-to-r from-gray-800/50 to-gray-900/50 border border-white/10">
+                          <div className="flex justify-between items-center mb-3">
+                            <h4 className="text-sm font-semibold text-white">Last Analysis Result</h4>
+                            <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                              analysisResults[checklist.id].compliance_status === 'compliant' ? 'bg-green-500' :
+                              analysisResults[checklist.id].compliance_status === 'partial' ? 'bg-yellow-500' :
+                              'bg-red-500'
+                            } text-white`}>
+                              {((analysisResults[checklist.id].compliance_score || 0) * 100).toFixed(0)}%
+                            </span>
+                          </div>
+                          {analysisResults[checklist.id].summary && (
+                            <p className="text-xs text-gray-300 mb-2">{analysisResults[checklist.id].summary.slice(0, 150)}...</p>
+                          )}
+                          <Link
+                            to="/reports"
+                            className="text-xs text-red-400 hover:text-red-300 underline"
+                          >
+                            View full report →
+                          </Link>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

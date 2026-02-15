@@ -4,6 +4,7 @@ Text extraction utilities for PDF, DOCX, and TXT files.
 
 import io
 import logging
+import re
 from pathlib import Path
 from typing import Optional
 
@@ -16,6 +17,33 @@ logger = logging.getLogger(__name__)
 class TextExtractionError(Exception):
     """Raised when text extraction fails."""
     pass
+
+
+def sanitize_text(text: str) -> str:
+    """
+    Remove invalid Unicode characters (surrogates) from text.
+    This is necessary because PDF extraction can produce malformed Unicode.
+    
+    Args:
+        text: Input text that may contain invalid characters
+        
+    Returns:
+        Sanitized text safe for UTF-8 encoding
+    """
+    if not text:
+        return ""
+    
+    # Remove surrogate characters (U+D800 to U+DFFF)
+    # These are invalid in UTF-8 and cause encoding errors
+    sanitized = text.encode('utf-8', errors='surrogatepass').decode('utf-8', errors='replace')
+    
+    # Replace any remaining problematic characters with a space
+    sanitized = re.sub(r'[\ud800-\udfff]', '', sanitized)
+    
+    # Also replace other control characters that might cause issues
+    sanitized = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', sanitized)
+    
+    return sanitized
 
 
 def extract_text_from_pdf(file_content: bytes) -> str:
@@ -40,6 +68,8 @@ def extract_text_from_pdf(file_content: bytes) -> str:
             try:
                 page_text = page.extract_text()
                 if page_text:
+                    # Sanitize text to remove invalid Unicode characters
+                    page_text = sanitize_text(page_text)
                     text_parts.append(page_text)
             except Exception as e:
                 logger.warning(f"Failed to extract text from page {page_num}: {e}")
@@ -162,13 +192,10 @@ def get_file_type(filename: str) -> Optional[str]:
     """
     extension = Path(filename).suffix.lower().lstrip(".")
     
-    supported_types = {"pdf", "docx", "txt"}
+    # Only PDF is supported for audit reports
+    supported_types = {"pdf"}
     
     if extension in supported_types:
         return extension
-    
-    # Handle alternative extensions
-    if extension == "doc":
-        return None  # We don't support old .doc format
     
     return None

@@ -1,10 +1,27 @@
 import logging
+import re
 from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
+
+
+def sanitize_text(text: str) -> str:
+    """
+    Remove invalid Unicode characters (surrogates) from text.
+    This prevents encoding errors when processing text from database.
+    """
+    if not text:
+        return ""
+    
+    # Remove surrogate characters (U+D800 to U+DFFF)
+    sanitized = text.encode('utf-8', errors='surrogatepass').decode('utf-8', errors='replace')
+    sanitized = re.sub(r'[\ud800-\udfff]', '', sanitized)
+    sanitized = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', sanitized)
+    
+    return sanitized
 
 from .models import Document, DocumentChunk, AnalysisResult
 from .serializers import (
@@ -223,7 +240,7 @@ class AnalyzeView(APIView):
     
     def post(self, request):
         """Analyze uploaded documents against a specific checklist."""
-        print("\n\ud83d\udce5 ANALYZE REQUEST RECEIVED")
+        print("\n[ANALYZE] Request received")
         
         serializer = AnalyzeRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -232,9 +249,9 @@ class AnalyzeView(APIView):
         checklist_title = serializer.validated_data["checklist_title"]
         file_names = serializer.validated_data["files"]
         
-        print(f"\ud83d\udccb Checklist ID: {checklist_id}")
-        print(f"\ud83d\udccb Checklist Title: {checklist_title}")
-        print(f"\ud83d\udcc1 Files: {file_names}")
+        print(f"[ANALYZE] Checklist ID: {checklist_id}")
+        print(f"[ANALYZE] Checklist Title: {checklist_title}")
+        print(f"[ANALYZE] Files: {file_names}")
         
         try:
             # Find documents by name
@@ -243,10 +260,10 @@ class AnalyzeView(APIView):
                 status=Document.Status.COMPLETED
             )
             
-            print(f"\ud83d\udcc4 Found {documents.count()} processed document(s)")
+            print(f"[ANALYZE] Found {documents.count()} processed document(s)")
             
             if not documents.exists():
-                print("\u274c No processed documents found")
+                print("[ANALYZE] ERROR: No processed documents found")
                 return Response(
                     {"error": "No processed documents found with the given file names"},
                     status=status.HTTP_404_NOT_FOUND
@@ -257,9 +274,12 @@ class AnalyzeView(APIView):
             for doc in documents:
                 chunks = doc.chunks.all()
                 for chunk in chunks:
+                    # Sanitize content to remove any invalid Unicode chars
+                    content = sanitize_text(chunk.content)
+                    heading = sanitize_text(chunk.heading) if chunk.heading else None
                     document_chunks.append({
-                        "content": chunk.content,
-                        "heading": chunk.heading,
+                        "content": content,
+                        "heading": heading,
                         "document_name": doc.name,
                     })
             

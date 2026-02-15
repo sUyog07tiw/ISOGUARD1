@@ -5,6 +5,7 @@ AI-powered document analyzer for ISO 27001 compliance checking.
 import logging
 import json
 import os
+import re
 from typing import List, Dict, Any, Optional
 from django.conf import settings
 from django.utils import timezone
@@ -180,6 +181,25 @@ class DocumentAnalyzer:
         else:
             logger.info("Azure OpenAI credentials not found. Using mock analysis.")
     
+    def _sanitize_text(self, text: str) -> str:
+        """
+        Remove invalid Unicode characters (surrogates) from text.
+        This prevents encoding errors when processing PDF text.
+        """
+        if not text:
+            return ""
+        
+        # Remove surrogate characters (U+D800 to U+DFFF)
+        sanitized = text.encode('utf-8', errors='surrogatepass').decode('utf-8', errors='replace')
+        
+        # Remove any remaining surrogate characters
+        sanitized = re.sub(r'[\ud800-\udfff]', '', sanitized)
+        
+        # Remove control characters except newlines and tabs
+        sanitized = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', sanitized)
+        
+        return sanitized
+    
     def analyze(
         self,
         analysis_result,
@@ -212,10 +232,13 @@ class DocumentAnalyzer:
             print(f"📄 Documents: {len(document_chunks)} chunk(s) to analyze")
             print(f"🤖 Using: {'Azure OpenAI' if self.use_azure else 'Mock Analysis'}")
             
-            # Combine all chunk content
+            # Combine all chunk content and sanitize
             combined_content = "\n\n".join([
                 chunk.get("content", "") for chunk in document_chunks
             ])
+            
+            # Sanitize content to remove invalid Unicode characters
+            combined_content = self._sanitize_text(combined_content)
             
             print(f"📝 Total content length: {len(combined_content)} characters")
             
@@ -313,15 +336,19 @@ class DocumentAnalyzer:
         controls = checklist_info.get("controls", [])
         controls_text = "\n".join([f"- {c}" for c in controls])
         
+        # Truncate content to fit within token limits
+        max_content_chars = 20000
+        truncated_content = content[:max_content_chars]
+        
         prompt = f"""You are an expert ISO 27001 compliance auditor. Analyze the following audit report/document content against the ISO 27001 checklist item: "{checklist_title}".
 
 The specific controls to evaluate are:
 {controls_text}
 
 Document Content:
-{content[:15000]}
+{truncated_content}
 
-Please perform a thorough compliance analysis and provide your assessment in the following JSON format:
+Please perform a thorough compliance analysis and return ONLY valid JSON with exactly this shape:
 {{
     "compliance_status": "compliant" | "partial" | "non_compliant" | "not_applicable",
     "compliance_score": 0.0 to 1.0 (where 1.0 is fully compliant),
@@ -352,37 +379,44 @@ Please perform a thorough compliance analysis and provide your assessment in the
 Be specific and reference the actual document content in your findings. Provide practical, actionable recommendations. Score each control individually where possible."""
 
         try:
-            print(f"   \ud83c\udf10 Calling Azure OpenAI (deployment: {self.azure_deployment})...")
+            print(f"   🌐 Calling Azure OpenAI (deployment: {self.azure_deployment})...")
             
             response = self.client.chat.completions.create(
                 model=self.azure_deployment,
                 messages=[
                     {
                         "role": "system",
-                        "content": "You are an expert ISO 27001 compliance auditor with deep knowledge of information security management systems. Always respond with valid JSON. Provide detailed, specific, and actionable analysis."
+                        "content": "You are an expert ISO 27001 compliance auditor with deep knowledge of information security management systems. Always respond with valid JSON only. Provide detailed, specific, and actionable analysis."
                     },
                     {"role": "user", "content": prompt}
                 ],
-                response_format={"type": "json_object"},
-                temperature=0.3,
-                max_completion_tokens=4000
+                max_completion_tokens=4096,
             )
             
-            print(f"   \u2705 Azure OpenAI response received")
+            print(f"   ✅ Azure OpenAI response received")
             
-            result_text = response.choices[0].message.content
-            print(f"   \ud83d\udcdd Response length: {len(result_text)} characters")
+            raw_output = response.choices[0].message.content
+            print(f"   📝 Response length: {len(raw_output)} characters")
             
-            result = json.loads(result_text)
+            # Parse JSON response
+            try:
+                result = json.loads(raw_output)
+            except json.JSONDecodeError:
+                # Try to extract JSON from the response if it contains extra text
+                json_match = re.search(r'\{[\s\S]*\}', raw_output)
+                if json_match:
+                    result = json.loads(json_match.group())
+                else:
+                    raise ValueError(f"LLM returned invalid JSON:\n{raw_output[:500]}")
             
             # Validate and normalize the result
             return self._normalize_result(result)
             
         except Exception as e:
-            print(f"   \u274c Azure OpenAI error: {e}")
+            print(f"   ❌ Azure OpenAI error: {e}")
             logger.error(f"Azure OpenAI analysis failed: {e}")
             # Fall back to mock analysis
-            print(f"   \u21a9\ufe0f  Falling back to mock analysis...")
+            print(f"   ↩️  Falling back to mock analysis...")
             return self._analyze_mock(content, checklist_info, checklist_title)
     
     def _analyze_mock(

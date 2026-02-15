@@ -96,18 +96,18 @@ class DocumentUploadSerializer(serializers.Serializer):
     """Serializer for document upload."""
     
     file = serializers.FileField(
-        help_text="The document file (PDF, DOCX, or TXT)"
+        help_text="The document file (PDF only)"
     )
     
     def validate_file(self, value):
         """Validate the uploaded file."""
         from .utils.extraction import get_file_type
         
-        # Check file type
+        # Check file type - only PDF allowed
         file_type = get_file_type(value.name)
-        if not file_type:
+        if file_type != "pdf":
             raise serializers.ValidationError(
-                "Unsupported file type. Only PDF, DOCX, and TXT are allowed."
+                "Unsupported file type. Only PDF files are allowed."
             )
         
         # Check file size (max 50MB)
