@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
+from django.http import HttpResponse
 
 
 def sanitize_text(text: str) -> str:
@@ -36,6 +37,7 @@ from .serializers import (
     AnalysisResultListSerializer,
 )
 from .utils import DocumentProcessor, get_file_type, DocumentAnalyzer
+from .utils.pdf_report import generate_audit_report_pdf
 
 logger = logging.getLogger(__name__)
 
@@ -361,3 +363,102 @@ class AnalysisResultViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = queryset.filter(compliance_status=compliance_status)
         
         return queryset.prefetch_related("documents")
+
+
+class ExportAuditReportView(APIView):
+    """
+    API endpoint for exporting audit reports as PDF.
+    
+    GET /documents/export-report/
+    Query params:
+        - checklist_ids: Comma-separated list of checklist IDs (optional, defaults to all)
+        - organization: Organization name (optional)
+    """
+    
+    permission_classes = [permissions.AllowAny]  # Change to IsAuthenticated in production
+    
+    def get(self, request):
+        """Generate and download a PDF audit report."""
+        
+        print("\n[EXPORT] PDF Report generation requested")
+        
+        # Get query parameters
+        checklist_ids_param = request.query_params.get("checklist_ids", "")
+        organization_name = request.query_params.get("organization", "Organization")
+        
+        try:
+            # Parse checklist IDs
+            if checklist_ids_param:
+                checklist_ids = [int(x.strip()) for x in checklist_ids_param.split(",") if x.strip()]
+            else:
+                checklist_ids = None  # Get all
+            
+            # Fetch analysis results
+            queryset = AnalysisResult.objects.filter(status=AnalysisResult.Status.COMPLETED)
+            
+            if checklist_ids:
+                queryset = queryset.filter(checklist_id__in=checklist_ids)
+            
+            # Order by checklist_id
+            queryset = queryset.order_by("checklist_id")
+            
+            # Get the latest result for each checklist
+            latest_results = {}
+            for result in queryset:
+                cid = result.checklist_id
+                if cid not in latest_results or result.created_at > latest_results[cid].created_at:
+                    latest_results[cid] = result
+            
+            if not latest_results:
+                return Response(
+                    {"error": "No completed analysis results found. Please analyze documents first."},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            # Convert to list of dicts for PDF generator
+            analysis_data = []
+            for cid in sorted(latest_results.keys()):
+                result = latest_results[cid]
+                analysis_data.append({
+                    "checklist_id": result.checklist_id,
+                    "checklist_title": result.checklist_title,
+                    "status": result.status,
+                    "compliance_status": result.compliance_status,
+                    "compliance_score": result.compliance_score,
+                    "summary": result.summary or "",
+                    "findings": result.findings or [],
+                    "recommendations": result.recommendations or [],
+                    "gaps": result.gaps or [],
+                    "comments": result.comments or [],
+                    "control_scores": result.control_scores or {},
+                })
+            
+            print(f"[EXPORT] Generating PDF for {len(analysis_data)} checklist(s)")
+            
+            # Generate PDF
+            pdf_bytes = generate_audit_report_pdf(analysis_data, organization_name)
+            
+            print(f"[EXPORT] PDF generated successfully ({len(pdf_bytes)} bytes)")
+            
+            # Create HTTP response with PDF
+            response = HttpResponse(pdf_bytes, content_type='application/pdf')
+            filename = f"ISOGUARD_Audit_Report_{organization_name.replace(' ', '_')}.pdf"
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            response['Content-Length'] = len(pdf_bytes)
+            
+            return response
+            
+        except ValueError as e:
+            logger.error(f"Invalid checklist_ids parameter: {e}")
+            return Response(
+                {"error": "Invalid checklist_ids parameter. Use comma-separated integers."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            logger.error(f"PDF generation failed: {e}")
+            import traceback
+            traceback.print_exc()
+            return Response(
+                {"error": f"Failed to generate PDF report: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

@@ -165,6 +165,46 @@ const api = {
             body: JSON.stringify(data),
         }),
     },
+
+    // Download file (for PDF export, etc.)
+    downloadFile: async (endpoint, filename) => {
+        const url = `${API_BASE_URL}${endpoint}`;
+        const token = getAccessToken();
+
+        const headers = {
+            ...(token && { 'Authorization': `Bearer ${token}` }),
+        };
+
+        try {
+            const response = await fetch(url, {
+                method: 'GET',
+                headers,
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || `Download failed: ${response.status}`);
+            }
+
+            // Get the blob from response
+            const blob = await response.blob();
+            
+            // Create download link
+            const downloadUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = filename || 'download.pdf';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(downloadUrl);
+            
+            return true;
+        } catch (error) {
+            console.error('Download failed:', error);
+            throw error;
+        }
+    },
 };
 
 export default api;

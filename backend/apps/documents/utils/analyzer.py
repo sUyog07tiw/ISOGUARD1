@@ -12,15 +12,20 @@ from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
-# ISO 27001 Checklist definitions
+# ISO 27001:2022 Checklist definitions with comprehensive requirements
 ISO27001_CHECKLISTS = {
     1: {
         "id": 1,
         "title": "A.5 Information Security Policies",
         "controls": [
-            "A.5.1 Management direction for information security",
-            "A.5.1.1 Policies for information security",
-            "A.5.1.2 Review of the policies for information security",
+            "A.5.1 Policies for information security",
+            "A.5.2 Information security roles and responsibilities",
+            "A.5.3 Segregation of duties",
+            "A.5.4 Management responsibilities",
+            "A.5.5 Contact with authorities",
+            "A.5.6 Contact with special interest groups",
+            "A.5.7 Threat intelligence",
+            "A.5.8 Information security in project management",
         ],
         "keywords": [
             "information security policy",
@@ -29,21 +34,63 @@ ISO27001_CHECKLISTS = {
             "management commitment",
             "policy approval",
             "policy communication",
+            "strategy",
+            "legislation",
+            "regulations",
+            "contracts",
+            "security objectives",
+            "security principles",
         ],
+        "requirements": """ISO 27001:2022 A.5 Information Security Policies Requirements:
+
+The information security policy MUST consider the following:
+1. Strategy and requirements of the business
+2. Legislation, regulations, and contracts
+3. Information security risks and threats that exist today and in the future
+
+The information security policy MUST include statements concerning:
+1. Information security definition - Clear definition of what information security means for the organization
+2. Framework for establishing information security objectives - How objectives are set and measured
+3. Information security principles that should guide all activities
+4. A commitment to comply with all applicable information security requirements
+5. An ongoing commitment to improving the information security management system (ISMS)
+6. Role-based assignment of responsibilities for information security management
+7. Procedures for handling exceptions and exemptions
+
+ISO 27001:2022 also requires topic-specific policies for:
+- Information security incident management
+- Asset management
+- Networking security
+- Incident management
+- Secure development
+
+AUDIT CHECKLIST:
+□ Does the policy align with business strategy and objectives?
+□ Does it reference applicable laws, regulations, and contractual obligations?
+□ Is there a clear definition of information security?
+□ Are security objectives defined with a framework for measurement?
+□ Are guiding principles for information security activities documented?
+□ Is there a commitment statement to compliance?
+□ Is there a commitment to continual improvement of the ISMS?
+□ Are roles and responsibilities clearly assigned?
+□ Is there a process for exceptions and exemptions?
+□ Are topic-specific policies defined (incident management, asset management, network security, secure development)?
+□ Is the policy approved by management?
+□ Has the policy been communicated to all relevant parties?
+□ Is there a scheduled review process for the policy?""",
     },
     2: {
         "id": 2,
         "title": "A.6 Organization of Information Security",
         "controls": [
-            "A.6.1 Internal organization",
-            "A.6.1.1 Information security roles and responsibilities",
-            "A.6.1.2 Segregation of duties",
-            "A.6.1.3 Contact with authorities",
-            "A.6.1.4 Contact with special interest groups",
-            "A.6.1.5 Information security in project management",
-            "A.6.2 Mobile devices and teleworking",
-            "A.6.2.1 Mobile device policy",
-            "A.6.2.2 Teleworking",
+            "A.6.1 Screening",
+            "A.6.2 Terms and conditions of employment",
+            "A.6.3 Information security awareness, education and training",
+            "A.6.4 Disciplinary process",
+            "A.6.5 Responsibilities after termination or change of employment",
+            "A.6.6 Confidentiality or non-disclosure agreements",
+            "A.6.7 Remote working",
+            "A.6.8 Information security event reporting",
         ],
         "keywords": [
             "roles",
@@ -54,21 +101,58 @@ ISO27001_CHECKLISTS = {
             "teleworking",
             "remote work",
             "project management",
+            "CISO",
+            "ownership",
+            "information assets",
         ],
+        "requirements": """ISO 27001:2022 A.6 Organization of Information Security Requirements:
+
+All information security responsibilities MUST be defined and allocated. Responsibilities can be:
+- General (e.g., protecting information)
+- Specific (e.g., responsibility for granting particular permissions)
+
+Consideration MUST be given to ownership of information assets or groups of assets.
+
+Business roles with information security relevance include:
+- Departmental heads
+- Business process owners
+- Facilities manager
+- HR manager
+- Internal Auditor
+- CEO/Operations Director (may serve as CISO in smaller organizations)
+- CTO (may own technology-related information assets)
+
+The organization MUST ensure:
+1. Clear definition of who is responsible for what
+2. Responsibilities are proportionate to organization size and nature
+3. For smaller organizations, specific information security responsibilities within existing job roles must be clarified
+
+AUDIT CHECKLIST:
+□ Are all information security responsibilities defined and documented?
+□ Are responsibilities allocated to specific individuals or roles?
+□ Is there an information security organizational structure?
+□ Are asset owners identified for all information assets?
+□ Is there clear segregation of duties where needed?
+□ Are contacts with authorities established (law enforcement, regulators)?
+□ Are contacts with special interest groups maintained (security forums, professional associations)?
+□ Is information security integrated into project management?
+□ For smaller organizations: Are security responsibilities clarified within existing job descriptions?
+□ Is there a CISO or equivalent role with overarching ISMS responsibility?
+□ Are responsibilities reviewed and updated when organizational changes occur?
+□ Is there evidence of management commitment to information security?""",
     },
     3: {
         "id": 3,
         "title": "A.7 Human Resource Security",
         "controls": [
-            "A.7.1 Prior to employment",
-            "A.7.1.1 Screening",
-            "A.7.1.2 Terms and conditions of employment",
-            "A.7.2 During employment",
-            "A.7.2.1 Management responsibilities",
-            "A.7.2.2 Information security awareness, education and training",
-            "A.7.2.3 Disciplinary process",
-            "A.7.3 Termination and change of employment",
-            "A.7.3.1 Termination or change of employment responsibilities",
+            "A.7.1 Screening (background checks)",
+            "A.7.2 Terms and conditions of employment",
+            "A.7.3 Information security awareness, education and training",
+            "A.7.4 Disciplinary process",
+            "A.7.5 Responsibilities after termination or change of employment",
+            "A.7.6 Confidentiality or non-disclosure agreements",
+            "A.7.7 Remote working",
+            "A.7.8 Information security event reporting",
         ],
         "keywords": [
             "screening",
@@ -80,25 +164,90 @@ ISO27001_CHECKLISTS = {
             "termination",
             "onboarding",
             "offboarding",
+            "NDA",
+            "confidentiality",
+            "remote working",
         ],
+        "requirements": """ISO 27001:2022 A.7 Human Resource Security Requirements:
+
+People controls span pre-employment, during employment, and post-employment phases:
+
+PRE-EMPLOYMENT:
+1. Personnel screening / background checks (A.6.1 Screening)
+   - Ensures only trustworthy individuals are hired
+   - Mitigates insider threats
+   - Verifies suitability for sensitive roles
+
+2. Employment contracts and confidentiality agreements (A.6.2)
+   - Staff and contractors must agree to confidentiality and security obligations
+   - Non-disclosure agreements (NDAs)
+   - Acceptable use policies
+   - Consequences of breach documented
+
+DURING EMPLOYMENT:
+3. Security awareness training and training records (A.6.3)
+   - Keeps employees aware of policies
+   - Reduces human error
+   - Provides evidence of compliance
+   - Regular updates and refresher training
+
+4. Disciplinary and incident reporting procedures (A.6.4 and A.6.8)
+   - Safe channels to report incidents or policy violations
+   - Clear expectations for investigation and disciplinary action
+
+POST-EMPLOYMENT:
+5. Secure termination and change management (A.6.5)
+   - Timely revocation of access
+   - Return of assets
+   - Preservation of confidentiality after role changes or termination
+
+6. Confidentiality agreements (A.6.6)
+   - Contractual confidentiality obligations remain binding after employment ends
+
+REMOTE WORKING:
+7. Remote working controls (A.6.7)
+   - Device security requirements
+   - Secure connections (VPN, encrypted communications)
+   - Monitoring and logging
+
+8. Role-based access management (supported by A.8 controls)
+   - HR defines role descriptions and approves access rights
+   - Least-privilege enforcement
+
+AUDIT CHECKLIST:
+□ Are background checks performed for all new hires?
+□ Are background checks proportionate to job role and information access?
+□ Do employment contracts include security obligations?
+□ Are NDAs or confidentiality agreements signed?
+□ Is there a documented acceptable use policy?
+□ Is there a security awareness training program?
+□ Are training records maintained?
+□ Is training provided on onboarding and regularly thereafter?
+□ Is there a formal disciplinary process for security violations?
+□ Are there safe channels for reporting security incidents?
+□ Is there a termination/offboarding process that includes access revocation?
+□ Is there a process for return of company assets?
+□ Do confidentiality obligations extend beyond employment?
+□ Are remote working security requirements documented?
+□ Is device security enforced for remote workers?
+□ Are secure connections required for remote access?""",
     },
     4: {
         "id": 4,
         "title": "A.8 Asset Management",
         "controls": [
-            "A.8.1 Responsibility for assets",
-            "A.8.1.1 Inventory of assets",
-            "A.8.1.2 Ownership of assets",
-            "A.8.1.3 Acceptable use of assets",
-            "A.8.1.4 Return of assets",
-            "A.8.2 Information classification",
-            "A.8.2.1 Classification of information",
-            "A.8.2.2 Labelling of information",
-            "A.8.2.3 Handling of assets",
-            "A.8.3 Media handling",
-            "A.8.3.1 Management of removable media",
-            "A.8.3.2 Disposal of media",
-            "A.8.3.3 Physical media transfer",
+            "A.8.1 Inventory of assets",
+            "A.8.2 Ownership of assets",
+            "A.8.3 Acceptable use of assets",
+            "A.8.4 Return of assets",
+            "A.8.5 Classification of information",
+            "A.8.6 Labelling of information",
+            "A.8.7 Handling of assets",
+            "A.8.8 Management of removable media",
+            "A.8.9 Configuration management",
+            "A.8.10 Information deletion",
+            "A.8.11 Data masking",
+            "A.8.12 Data leakage prevention",
         ],
         "keywords": [
             "asset inventory",
@@ -109,7 +258,85 @@ ISO27001_CHECKLISTS = {
             "removable media",
             "disposal",
             "asset ownership",
+            "configuration management",
+            "data masking",
+            "data deletion",
+            "DLP",
         ],
+        "requirements": """ISO 27001:2022 A.8 Asset Management Requirements:
+
+KEY ASPECTS OF ASSET MANAGEMENT:
+
+1. Inventory and Identification (A.8.1)
+   - Create a comprehensive list of ALL information assets
+   - Include: data, software, hardware, services, people, premises
+   - Maintain accuracy and currency of the inventory
+
+2. Ownership (A.8.2)
+   - Assign owners for EVERY asset
+   - Owners are responsible for maintaining and protecting the asset
+   - Clear accountability chain
+
+3. Acceptable Use (A.8.3)
+   - Define rules for how employees use assets (computers, data, etc.)
+   - Document acceptable use policies
+   - Communicate policies to all users
+
+4. Return of Assets (A.8.4)
+   - Ensure staff return company assets upon termination
+   - Process for change of employment
+   - Tracking and verification
+
+5. Classification and Handling (A.8.5 - A.8.8)
+   - Classify information based on confidentiality (e.g., restricted, confidential, internal, public)
+   - Apply proper labeling procedures
+   - Define handling procedures for each classification level
+
+6. Media Disposal (A.8.8)
+   - Safely destroy storage media to prevent data breaches
+   - Documented disposal procedures
+   - Verification of destruction
+
+ISO 27001:2022 NEW CONTROLS:
+
+7. Configuration Management (A.8.9)
+   - Tracking configuration changes to hardware and software
+   - Baseline configurations
+   - Change management for configurations
+
+8. Information Deletion (A.8.10)
+   - Deleting information when no longer required
+   - Secure deletion procedures
+   - Retention policy compliance
+
+9. Data Masking (A.8.11)
+   - Using masking for sensitive data
+   - Test data management
+   - Production data protection
+
+10. Data Leakage Prevention (A.8.12)
+    - Protecting against data leaks
+    - DLP tools and procedures
+    - Monitoring and alerts
+
+AUDIT CHECKLIST:
+□ Is there a comprehensive asset inventory?
+□ Does the inventory include all asset types (data, software, hardware, services)?
+□ Is the inventory regularly reviewed and updated?
+□ Are all assets assigned to an owner?
+□ Is there an acceptable use policy?
+□ Is there a process for return of assets on termination?
+□ Is there an information classification scheme?
+□ Are classification levels clearly defined (e.g., public, internal, confidential, restricted)?
+□ Are assets labeled according to classification?
+□ Are handling procedures defined for each classification level?
+□ Is there a media disposal policy?
+□ Is secure destruction verified and documented?
+□ Is configuration management implemented?
+□ Is there an information deletion/retention policy?
+□ Is data masking used for sensitive data in non-production environments?
+□ Are data leakage prevention controls in place?
+□ Is there monitoring for unauthorized data transfers?""",
     },
     5: {
         "id": 5,
@@ -122,7 +349,7 @@ ISO27001_CHECKLISTS = {
             "A.9.2.1 User registration and de-registration",
             "A.9.2.2 User access provisioning",
             "A.9.2.3 Management of privileged access rights",
-            "A.9.2.4 Management of secret authentication information of users",
+            "A.9.2.4 Management of secret authentication information",
             "A.9.2.5 Review of user access rights",
             "A.9.2.6 Removal or adjustment of access rights",
             "A.9.3 User responsibilities",
@@ -144,7 +371,70 @@ ISO27001_CHECKLISTS = {
             "access rights",
             "login",
             "user registration",
+            "MFA",
+            "multi-factor",
+            "network segmentation",
+            "role-based access",
+            "RBAC",
+            "least privilege",
         ],
+        "requirements": """ISO 27001:2022 A.9 Access Control Requirements:
+
+KEY ASPECTS OF ACCESS CONTROL:
+
+1. Business Requirements (A.9.1)
+   - Development of an access control policy
+   - Network segmentation implementation
+   - Role-based access control (RBAC)
+   - Principle of least privilege
+   - Need-to-know basis for information access
+
+2. User Access Management (A.9.2)
+   - Formal user registration and de-registration process
+   - User access provisioning procedures
+   - Management of privileged access rights (admin accounts, root access)
+   - Regular reviews of access permissions
+   - Timely removal/adjustment of access rights when roles change
+
+3. User Responsibilities (A.9.3)
+   - Users must follow access control policies
+   - Safeguarding authentication information (passwords, tokens, etc.)
+   - Reporting security incidents
+
+4. System & Application Access Control (A.9.4)
+   - Secure log-on procedures
+   - Password management systems
+   - Multi-Factor Authentication (MFA) to protect against unauthorized access
+   - Session management
+   - Access control to program source code
+
+Under ISO 27001:2022, controls are aligned with more granular requirements:
+- Effective implementation reduces risk of data breaches
+- Mitigates insider threats
+- Ensures users have ONLY the minimum access needed for their roles
+
+AUDIT CHECKLIST:
+□ Is there a documented access control policy?
+□ Does the policy align with business requirements?
+□ Is network segmentation implemented?
+□ Is role-based access control (RBAC) used?
+□ Is there a formal user registration process?
+□ Is there a formal user de-registration/offboarding process?
+□ Are access provisioning requests documented and approved?
+□ Is privileged access separately managed and controlled?
+□ Are privileged accounts inventoried and monitored?
+□ Are user access rights reviewed regularly (at least annually)?
+□ Are access rights adjusted promptly when roles change?
+□ Are users trained on their access control responsibilities?
+□ Is authentication information (passwords) properly protected?
+□ Are secure log-on procedures implemented?
+□ Is there a password management policy (complexity, expiration, history)?
+□ Is Multi-Factor Authentication (MFA) implemented for sensitive access?
+□ Are sessions properly managed (timeout, re-authentication)?
+□ Is access to source code restricted?
+□ Are privileged utility programs controlled?
+□ Is there logging and monitoring of access attempts?
+□ Are failed login attempts monitored and acted upon?""",
     },
 }
 
@@ -336,39 +626,48 @@ class DocumentAnalyzer:
         controls = checklist_info.get("controls", [])
         controls_text = "\n".join([f"- {c}" for c in controls])
         
+        # Get the comprehensive requirements for this checklist
+        requirements = checklist_info.get("requirements", "")
+        
         # Truncate content to fit within token limits
-        max_content_chars = 20000
+        max_content_chars = 18000  # Reduced to accommodate requirements
         truncated_content = content[:max_content_chars]
         
-        prompt = f"""You are an expert ISO 27001 compliance auditor. Analyze the following audit report/document content against the ISO 27001 checklist item: "{checklist_title}".
+        prompt = f"""You are an expert ISO 27001:2022 compliance auditor. Analyze the following audit report/document content against the ISO 27001 checklist item: "{checklist_title}".
 
-The specific controls to evaluate are:
+=== SPECIFIC CONTROLS TO EVALUATE ===
 {controls_text}
 
-Document Content:
+=== ISO 27001:2022 REQUIREMENTS AND AUDIT CHECKLIST ===
+{requirements}
+
+=== DOCUMENT CONTENT TO ANALYZE ===
 {truncated_content}
 
-Please perform a thorough compliance analysis and return ONLY valid JSON with exactly this shape:
+=== ANALYSIS INSTRUCTIONS ===
+Perform a thorough compliance analysis against ALL requirements listed above. For each audit checklist item, determine if the document provides evidence of compliance.
+
+Return ONLY valid JSON with exactly this shape:
 {{
     "compliance_status": "compliant" | "partial" | "non_compliant" | "not_applicable",
-    "compliance_score": 0.0 to 1.0 (where 1.0 is fully compliant),
-    "summary": "Executive summary of the compliance assessment (2-3 sentences)",
+    "compliance_score": 0.0 to 1.0 (where 1.0 is fully compliant, based on percentage of checklist items satisfied),
+    "summary": "Executive summary of the compliance assessment (2-3 sentences summarizing overall compliance posture)",
     "findings": [
-        "Specific finding 1 with reference to document content",
-        "Specific finding 2 with reference to document content"
+        "Specific finding 1 with direct reference to document content that addresses a requirement",
+        "Specific finding 2 indicating what requirement is met and how"
     ],
     "recommendations": [
         "Actionable recommendation 1 to improve compliance",
-        "Actionable recommendation 2 to address gaps"
+        "Actionable recommendation 2 to address specific gaps"
     ],
     "gaps": [
-        "Identified gap 1 in compliance coverage",
-        "Identified gap 2 requiring attention"
+        "Specific requirement from the audit checklist that is NOT addressed in the document",
+        "Another missing requirement with explanation of what should be documented"
     ],
     "comments": [
-        "General observation about the audit report quality",
-        "Comment on documentation completeness",
-        "Suggestions for improving the audit report itself"
+        "General observation about the audit report quality and completeness",
+        "Comment on documentation thoroughness for this control area",
+        "Suggestions for improving the audit evidence"
     ],
     "control_scores": {{
         "control_name": 0.0 to 1.0,
@@ -376,7 +675,13 @@ Please perform a thorough compliance analysis and return ONLY valid JSON with ex
     }}
 }}
 
-Be specific and reference the actual document content in your findings. Provide practical, actionable recommendations. Score each control individually where possible."""
+IMPORTANT GUIDELINES:
+1. Reference the actual document content in your findings
+2. Map gaps directly to the audit checklist items that are not satisfied
+3. Provide practical, actionable recommendations
+4. Score each control individually based on evidence in the document
+5. Be strict in your assessment - only mark items as compliant if there is clear evidence
+6. Consider ISO 27001:2022 specific requirements including new controls"""
 
         try:
             print(f"   🌐 Calling Azure OpenAI (deployment: {self.azure_deployment})...")
@@ -433,21 +738,45 @@ Be specific and reference the actual document content in your findings. Provide 
         content_lower = content.lower()
         keywords = checklist_info.get("keywords", [])
         controls = checklist_info.get("controls", [])
+        requirements = checklist_info.get("requirements", "")
+        
+        # Extract audit checklist items from requirements
+        audit_items = []
+        if requirements:
+            for line in requirements.split('\n'):
+                if line.strip().startswith('□'):
+                    audit_items.append(line.strip()[1:].strip())
         
         # Count keyword matches
         keyword_matches = sum(1 for kw in keywords if kw.lower() in content_lower)
         keyword_ratio = keyword_matches / len(keywords) if keywords else 0
         
-        # Determine compliance status based on keyword coverage
-        if keyword_ratio >= 0.7:
+        # Check audit items coverage
+        audit_matches = 0
+        audit_gaps = []
+        for item in audit_items:
+            # Extract key terms from audit item
+            key_terms = [word.lower() for word in item.split() if len(word) > 4][:3]
+            if any(term in content_lower for term in key_terms):
+                audit_matches += 1
+            else:
+                audit_gaps.append(item)
+        
+        audit_ratio = audit_matches / len(audit_items) if audit_items else keyword_ratio
+        
+        # Combined score based on keywords and audit items
+        combined_ratio = (keyword_ratio + audit_ratio) / 2 if audit_items else keyword_ratio
+        
+        # Determine compliance status based on combined coverage
+        if combined_ratio >= 0.7:
             compliance_status = "compliant"
-            compliance_score = 0.7 + (keyword_ratio * 0.3)
-        elif keyword_ratio >= 0.4:
+            compliance_score = 0.7 + (combined_ratio * 0.3)
+        elif combined_ratio >= 0.4:
             compliance_status = "partial"
-            compliance_score = 0.4 + (keyword_ratio * 0.3)
-        elif keyword_ratio > 0:
+            compliance_score = 0.4 + (combined_ratio * 0.3)
+        elif combined_ratio > 0:
             compliance_status = "non_compliant"
-            compliance_score = keyword_ratio * 0.4
+            compliance_score = combined_ratio * 0.4
         else:
             compliance_status = "not_applicable"
             compliance_score = 0.0
@@ -459,12 +788,17 @@ Be specific and reference the actual document content in your findings. Provide 
         findings = []
         if matched_keywords:
             findings.append(f"Document addresses the following topics: {', '.join(matched_keywords[:5])}")
+        if audit_matches > 0:
+            findings.append(f"Document satisfies {audit_matches} of {len(audit_items)} audit checklist items")
         
         recommendations = []
         gaps = []
         
+        # Add audit gaps
+        for gap in audit_gaps[:5]:
+            gaps.append(f"Audit requirement not satisfied: {gap}")
+        
         if missing_keywords:
-            gaps.append(f"Missing coverage for: {', '.join(missing_keywords[:5])}")
             recommendations.append(f"Consider adding documentation for: {', '.join(missing_keywords[:3])}")
         
         for control in controls[:3]:
@@ -474,6 +808,8 @@ Be specific and reference the actual document content in your findings. Provide 
         
         summary = f"Analysis of '{checklist_title}' based on document review. "
         summary += f"Found {keyword_matches} of {len(keywords)} expected topics covered. "
+        if audit_items:
+            summary += f"Satisfied {audit_matches} of {len(audit_items)} audit requirements. "
         summary += f"Overall compliance score: {compliance_score:.1%}."
         
         # Generate comments for the audit report
@@ -481,6 +817,8 @@ Be specific and reference the actual document content in your findings. Provide 
             f"Document analyzed contains {len(content)} characters of content.",
             f"Keyword coverage: {keyword_ratio:.1%} of expected terms found.",
         ]
+        if audit_items:
+            comments.append(f"Audit checklist coverage: {audit_ratio:.1%} ({audit_matches}/{len(audit_items)} items).")
         if compliance_status == "compliant":
             comments.append("The audit report demonstrates strong compliance documentation.")
         elif compliance_status == "partial":
@@ -503,7 +841,7 @@ Be specific and reference the actual document content in your findings. Provide 
             "summary": summary,
             "findings": findings[:5],
             "recommendations": recommendations[:5],
-            "gaps": gaps[:5],
+            "gaps": gaps[:8],
             "comments": comments[:5],
             "control_scores": control_scores,
         }

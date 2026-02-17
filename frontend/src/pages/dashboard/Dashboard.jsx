@@ -5,11 +5,36 @@ import { logout, getCurrentUser } from "../../utils/auth";
 import api from "../../utils/api";
 
 const checklists = [
-  { id: 1, title: "A.5 Information Security Policies", description: "Policies for information security management direction and support." },
-  { id: 2, title: "A.6 Organization of Information Security", description: "Internal organization and mobile devices/teleworking controls." },
-  { id: 3, title: "A.7 Human Resource Security", description: "Prior to, during, and termination of employment security measures." },
-  { id: 4, title: "A.8 Asset Management", description: "Responsibility for assets, information classification, and media handling." },
-  { id: 5, title: "A.9 Access Control", description: "Business requirements, user access management, and system access controls." },
+  { 
+    id: 1, 
+    title: "A.5 Information Security Policies", 
+    description: "Policy framework including business strategy alignment, compliance commitments, security objectives, and role-based responsibilities.",
+    keyControls: ["Policy definition", "Security objectives", "Compliance commitment", "Continual improvement", "Topic-specific policies"]
+  },
+  { 
+    id: 2, 
+    title: "A.6 Organization of Information Security", 
+    description: "Organizational structure with defined roles, responsibilities, asset ownership, and segregation of duties.",
+    keyControls: ["Roles & responsibilities", "Segregation of duties", "Asset ownership", "Contact with authorities", "Project management"]
+  },
+  { 
+    id: 3, 
+    title: "A.7 Human Resource Security", 
+    description: "Pre-employment screening, awareness training, disciplinary process, and secure termination procedures.",
+    keyControls: ["Background checks", "NDAs", "Security training", "Disciplinary process", "Termination procedures", "Remote working"]
+  },
+  { 
+    id: 4, 
+    title: "A.8 Asset Management", 
+    description: "Asset inventory, classification, acceptable use, configuration management, and data protection controls.",
+    keyControls: ["Asset inventory", "Classification", "Media handling", "Configuration management", "Data deletion", "DLP"]
+  },
+  { 
+    id: 5, 
+    title: "A.9 Access Control", 
+    description: "Access policy, user management, privileged access, MFA, and system access controls.",
+    keyControls: ["Access policy", "User provisioning", "Privileged access", "MFA", "Access reviews", "Secure log-on"]
+  },
 ];
 
 export default function Dashboard() {
@@ -19,6 +44,7 @@ export default function Dashboard() {
   const [analyzing, setAnalyzing] = useState({});
   const [analyzingAll, setAnalyzingAll] = useState(false);
   const [analysisResults, setAnalysisResults] = useState({});
+  const [exporting, setExporting] = useState({});
   const navigate = useNavigate();
   const user = getCurrentUser();
   const fileInputRefs = useRef({});
@@ -212,6 +238,57 @@ export default function Dashboard() {
     }
   };
 
+  const handleExportChecklist = async (checklistId) => {
+    const checklist = checklists.find((c) => c.id === checklistId);
+    
+    // Check if there's an analysis result for this checklist
+    if (!analysisResults[checklistId]) {
+      alert(`Please analyze documents for "${checklist?.title}" before exporting.`);
+      return;
+    }
+    
+    setExporting((prev) => ({ ...prev, [checklistId]: true }));
+    try {
+      const orgName = user?.name || 'Organization';
+      const endpoint = `/export-report/?checklist_ids=${checklistId}&organization=${encodeURIComponent(orgName)}`;
+      const filename = `ISOGUARD_${checklist?.title.replace(/[^a-zA-Z0-9]/g, '_')}_Report.pdf`;
+      
+      await api.downloadFile(endpoint, filename);
+      
+      alert(`Audit report for "${checklist?.title}" downloaded successfully!`);
+    } catch (err) {
+      console.error('Export failed:', err);
+      alert('Export failed: ' + (err.message || 'Unknown error.'));
+    } finally {
+      setExporting((prev) => ({ ...prev, [checklistId]: false }));
+    }
+  };
+
+  const handleExportAll = async () => {
+    // Check if any analysis has been completed
+    const completedAnalyses = Object.keys(analysisResults);
+    if (completedAnalyses.length === 0) {
+      alert('Please analyze at least one checklist before exporting.');
+      return;
+    }
+    
+    setExporting((prev) => ({ ...prev, all: true }));
+    try {
+      const orgName = user?.name || 'Organization';
+      const checklistIds = completedAnalyses.join(',');
+      const endpoint = `/export-report/?checklist_ids=${checklistIds}&organization=${encodeURIComponent(orgName)}`;
+      
+      await api.downloadFile(endpoint, `ISOGUARD_Full_Audit_Report_${orgName.replace(/\s+/g, '_')}.pdf`);
+      
+      alert(`Full audit report for ${completedAnalyses.length} checklist(s) downloaded!`);
+    } catch (err) {
+      console.error('Export failed:', err);
+      alert('Export failed: ' + (err.message || 'Unknown error.'));
+    } finally {
+      setExporting((prev) => ({ ...prev, all: false }));
+    }
+  };
+
   // Calculate total uploaded files
   const totalUploadedFiles = Object.values(uploadedFiles).flat().length;
   const checklistsWithUploads = Object.keys(uploadedFiles).filter(
@@ -262,12 +339,36 @@ export default function Dashboard() {
           <div>
             <h2 className="text-2xl font-bold text-white">Compliance Dashboard</h2>
             <p className="text-red-200 text-sm">
-              {user ? `Welcome back, ${user.name || 'User'}!` : 'Real-time ISMS validation against ISO/IEC 27001:2022'}
+              {user ? `Welcome , ${user.name || 'User'}!` : 'Real-time ISMS validation against ISO/IEC 27001:2022'}
             </p>
           </div>
           <div className="flex gap-3">
-            <button className="bg-gradient-to-br from-red-600 to-red-700 border border-red-500 px-4 py-2 rounded-lg text-sm font-semibold shadow-lg">
-              Export Audit Report (PDF)
+            <button 
+              onClick={handleExportAll}
+              disabled={exporting.all || Object.keys(analysisResults).length === 0}
+              className={`px-4 py-2 rounded-lg text-sm font-semibold shadow-lg flex items-center gap-2 transition-all ${
+                exporting.all || Object.keys(analysisResults).length === 0
+                  ? 'bg-gray-600 cursor-not-allowed text-gray-400'
+                  : 'bg-gradient-to-br from-red-600 to-red-700 border border-red-500 hover:from-red-700 hover:to-red-800 text-white'
+              }`}
+              title={Object.keys(analysisResults).length === 0 ? 'Run analysis first to export report' : 'Export all completed analyses'}
+            >
+              {exporting.all ? (
+                <>
+                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  Generating PDF...
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Export All Reports (PDF)
+                </>
+              )}
             </button>
           </div>
         </header>
@@ -332,9 +433,20 @@ export default function Dashboard() {
                       <span className="w-8 h-8 flex items-center justify-center bg-red-600 rounded-full text-sm font-bold">
                         {checklist.id}
                       </span>
-                      <div>
+                      <div className="flex-1">
                         <p className="font-semibold text-white">{checklist.title}</p>
                         <p className="text-xs text-gray-400">{checklist.description}</p>
+                        {/* Key Controls Tags */}
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {checklist.keyControls?.slice(0, 4).map((control, idx) => (
+                            <span key={idx} className="text-xs bg-red-900/50 text-red-200 px-2 py-0.5 rounded">
+                              {control}
+                            </span>
+                          ))}
+                          {checklist.keyControls?.length > 4 && (
+                            <span className="text-xs text-gray-500">+{checklist.keyControls.length - 4} more</span>
+                          )}
+                        </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -414,8 +526,38 @@ export default function Dashboard() {
                         </div>
                       )}
 
-                      {/* Analyze Button for this checklist */}
-                      <div className="mt-4 flex justify-end">
+                      {/* Analyze and Export Buttons for this checklist */}
+                      <div className="mt-4 flex justify-end gap-2">
+                        {/* Export Button */}
+                        <button
+                          onClick={() => handleExportChecklist(checklist.id)}
+                          disabled={exporting[checklist.id] || !analysisResults[checklist.id]}
+                          className={`px-4 py-2 rounded-full text-sm font-semibold shadow-lg transition-all flex items-center gap-2 ${
+                            exporting[checklist.id] || !analysisResults[checklist.id]
+                              ? 'bg-gray-600 cursor-not-allowed text-gray-400'
+                              : 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white'
+                          }`}
+                          title={!analysisResults[checklist.id] ? 'Run analysis first to export report' : 'Export PDF report'}
+                        >
+                          {exporting[checklist.id] ? (
+                            <>
+                              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                              </svg>
+                              Exporting...
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
+                              Export PDF
+                            </>
+                          )}
+                        </button>
+                        
+                        {/* Analyze Button */}
                         <button
                           onClick={() => handleAnalyzeChecklist(checklist.id)}
                           disabled={analyzing[checklist.id] || !uploadedFiles[checklist.id]?.length}
