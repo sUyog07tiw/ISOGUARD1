@@ -78,7 +78,72 @@ export default function GapAnalysis() {
     return allGaps;
   };
 
-  const allGaps = getAllGaps();
+  // Get all recommendations from analyses
+  const getAllRecommendations = () => {
+    const allRecs = [];
+    analyses.forEach(analysis => {
+      const recommendations = analysis.recommendations || [];
+      recommendations.forEach((rec, index) => {
+        allRecs.push({
+          id: `rec-${analysis.checklist_id}-${index}`,
+          checklistId: analysis.checklist_id,
+          checklistTitle: analysis.checklist_title || checklistTitles[analysis.checklist_id],
+          recommendation: rec,
+        });
+      });
+    });
+    return allRecs;
+  };
+
+  // Get all findings from analyses
+  const getAllFindings = () => {
+    const allFindings = [];
+    analyses.forEach(analysis => {
+      const findings = analysis.findings || [];
+      findings.forEach((finding, index) => {
+        allFindings.push({
+          id: `finding-${analysis.checklist_id}-${index}`,
+          checklistId: analysis.checklist_id,
+          checklistTitle: analysis.checklist_title || checklistTitles[analysis.checklist_id],
+          finding: finding,
+        });
+      });
+    });
+    return allFindings;
+  };
+
+  // Default gaps when no analysis exists
+  const defaultGaps = [
+    { id: 'default-1', checklistId: 1, checklistTitle: 'A.5 Information Security Policies', gap: 'Information security policy document not found or not aligned with ISO 27001:2022 requirements.', priority: 'high', complianceScore: 0.68, complianceStatus: 'partial' },
+    { id: 'default-2', checklistId: 4, checklistTitle: 'A.8 Asset Management', gap: 'Annex A.8.10: Information Deletion policy missing. No documented procedures for secure data deletion.', priority: 'high', complianceScore: 0.55, complianceStatus: 'partial' },
+    { id: 'default-3', checklistId: 1, checklistTitle: 'A.5 Information Security Policies', gap: 'Clause 6.2: ISMS Objectives not documented or lack measurable targets.', priority: 'medium', complianceScore: 0.68, complianceStatus: 'partial' },
+    { id: 'default-4', checklistId: 2, checklistTitle: 'A.6 Organization of Information Security', gap: 'Segregation of duties not fully implemented across critical functions.', priority: 'medium', complianceScore: 0.62, complianceStatus: 'partial' },
+    { id: 'default-5', checklistId: 3, checklistTitle: 'A.7 Human Resource Security', gap: 'Security awareness training frequency should be enhanced from annual to quarterly.', priority: 'low', complianceScore: 0.75, complianceStatus: 'partial' },
+    { id: 'default-6', checklistId: 5, checklistTitle: 'A.9 Access Control', gap: 'Access control logs for Annex A.8.3 require periodic review procedures.', priority: 'low', complianceScore: 0.72, complianceStatus: 'partial' },
+  ];
+
+  const defaultRecommendations = [
+    { id: 'rec-default-1', checklistId: 1, checklistTitle: 'A.5 Information Security Policies', recommendation: 'Develop a comprehensive Information Security Policy aligned with ISO 27001:2022 Clause 5.2, including top management commitment and security objectives.' },
+    { id: 'rec-default-2', checklistId: 4, checklistTitle: 'A.8 Asset Management', recommendation: 'Implement secure data deletion procedures per NIST SP 800-88 guidelines and document in your Asset Management policy.' },
+    { id: 'rec-default-3', checklistId: 2, checklistTitle: 'A.6 Organization of Information Security', recommendation: 'Define clear roles and responsibilities matrix (RACI) for all ISMS-related activities.' },
+    { id: 'rec-default-4', checklistId: 5, checklistTitle: 'A.9 Access Control', recommendation: 'Implement Multi-Factor Authentication (MFA) for all privileged and remote access scenarios.' },
+  ];
+
+  const defaultFindings = [
+    { id: 'finding-default-1', checklistId: 1, checklistTitle: 'A.5 Information Security Policies', finding: 'The organization has a basic security policy but lacks integration with business strategy.' },
+    { id: 'finding-default-2', checklistId: 3, checklistTitle: 'A.7 Human Resource Security', finding: 'Background verification process exists but is not consistently applied to all roles.' },
+    { id: 'finding-default-3', checklistId: 4, checklistTitle: 'A.8 Asset Management', finding: 'Asset inventory is maintained but classification scheme needs enhancement.' },
+  ];
+
+  // Use real data if available, otherwise use defaults
+  const realGaps = getAllGaps();
+  const realRecommendations = getAllRecommendations();
+  const realFindings = getAllFindings();
+  
+  const allGaps = realGaps.length > 0 ? realGaps : defaultGaps;
+  const allRecommendations = realRecommendations.length > 0 ? realRecommendations : defaultRecommendations;
+  const allFindings = realFindings.length > 0 ? realFindings : defaultFindings;
+  const isUsingDefaults = realGaps.length === 0;
   
   // Apply filters
   const filteredGaps = allGaps.filter(gap => {
@@ -196,25 +261,19 @@ export default function GapAnalysis() {
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
             </svg>
           </div>
-        ) : allGaps.length === 0 ? (
-          <section className="bg-white/5 border border-white/10 rounded-3xl p-10 text-center shadow-2xl">
-            <svg className="w-16 h-16 text-red-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            <h3 className="text-xl font-semibold text-white mb-2">No Gaps Found</h3>
-            <p className="text-gray-400 text-sm mb-4">
-              Upload your ISMS documentation on the Dashboard and run the AI analysis. 
-              Gap Analysis results will appear here after processing.
-            </p>
-            <Link 
-              to="/dashboard" 
-              className="inline-block px-6 py-2 bg-red-600 hover:bg-red-700 rounded-full text-sm font-semibold"
-            >
-              Go to Dashboard
-            </Link>
-          </section>
         ) : (
           <>
+            {/* Sample Data Notice */}
+            {isUsingDefaults && (
+              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 flex items-center gap-3">
+                <svg className="w-5 h-5 text-yellow-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="text-yellow-200 text-sm">
+                  Showing sample gaps from typical ISO 27001:2022 audits. <Link to="/dashboard" className="underline text-yellow-400 hover:text-yellow-300">Upload and analyze your documents</Link> to see real gaps from your ISMS.
+                </p>
+              </div>
+            )}
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-5 rounded-2xl border border-white/10">
@@ -279,7 +338,7 @@ export default function GapAnalysis() {
                   Gap Distribution by Checklist
                 </h3>
                 <div className="space-y-3">
-                  {Object.entries(gapsByChecklist).map(([checklistId, data]) => (
+                  {Object.entries(gapsByChecklist).length > 0 ? Object.entries(gapsByChecklist).map(([checklistId, data]) => (
                     <div 
                       key={checklistId}
                       className="p-4 bg-gray-800/50 rounded-xl border border-white/10 hover:border-red-500/30 transition-colors cursor-pointer"
@@ -288,7 +347,7 @@ export default function GapAnalysis() {
                       <div className="flex justify-between items-start mb-2">
                         <h4 className="text-sm font-semibold text-white">{data.title}</h4>
                         <span className={`text-xs font-bold ${getStatusColor(data.complianceStatus)}`}>
-                          {Math.round(data.complianceScore * 100)}%
+                          {Math.round((data.complianceScore || 0) * 100)}%
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -318,7 +377,9 @@ export default function GapAnalysis() {
                         )}
                       </div>
                     </div>
-                  ))}
+                  )) : (
+                    <p className="text-gray-400 text-sm">No gaps grouped by checklist.</p>
+                  )}
                 </div>
               </section>
 
@@ -357,6 +418,53 @@ export default function GapAnalysis() {
                 </div>
               </section>
             </div>
+
+            {/* Audit Findings Section */}
+            <section className="bg-white/5 border border-white/10 rounded-2xl p-6">
+              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Audit Findings
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {allFindings.map((finding) => (
+                  <div 
+                    key={finding.id}
+                    className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl"
+                  >
+                    <p className="text-xs text-blue-400 mb-2 font-semibold">{finding.checklistTitle}</p>
+                    <p className="text-sm text-gray-200">{finding.finding}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* Recommendations Section */}
+            <section className="bg-white/5 border border-white/10 rounded-2xl p-6">
+              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Recommendations
+              </h3>
+              <div className="space-y-3">
+                {allRecommendations.map((rec, index) => (
+                  <div 
+                    key={rec.id}
+                    className="p-4 bg-green-500/10 border border-green-500/20 rounded-xl flex gap-4"
+                  >
+                    <span className="flex-shrink-0 w-8 h-8 bg-green-600 rounded-full flex items-center justify-center text-sm font-bold text-white">
+                      {index + 1}
+                    </span>
+                    <div>
+                      <p className="text-xs text-green-400 mb-1 font-semibold">{rec.checklistTitle}</p>
+                      <p className="text-sm text-gray-200">{rec.recommendation}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
 
             {/* Action Items */}
             <section className="bg-gradient-to-r from-red-900/30 to-red-950/30 border border-red-500/30 rounded-2xl p-6">

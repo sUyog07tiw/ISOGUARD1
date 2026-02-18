@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import logo from "../../assets/Logo.jpg";
 import { logout, getCurrentUser } from "../../utils/auth";
@@ -45,9 +45,148 @@ export default function Dashboard() {
   const [analyzingAll, setAnalyzingAll] = useState(false);
   const [analysisResults, setAnalysisResults] = useState({});
   const [exporting, setExporting] = useState({});
+  const [loadingStats, setLoadingStats] = useState(true);
   const navigate = useNavigate();
   const user = getCurrentUser();
   const fileInputRefs = useRef({});
+
+  // Load existing analysis results on mount
+  useEffect(() => {
+    const fetchExistingAnalyses = async () => {
+      try {
+        const response = await api.get('/analyses/?status=completed');
+        const analyses = response.results || response || [];
+        
+        // Get latest analysis for each checklist
+        const latestByChecklist = {};
+        analyses.forEach(analysis => {
+          const cid = analysis.checklist_id;
+          if (!latestByChecklist[cid] || new Date(analysis.created_at) > new Date(latestByChecklist[cid].created_at)) {
+            latestByChecklist[cid] = analysis;
+          }
+        });
+        
+        setAnalysisResults(latestByChecklist);
+      } catch (err) {
+        console.error('Failed to fetch existing analyses:', err);
+      } finally {
+        setLoadingStats(false);
+      }
+    };
+    
+    fetchExistingAnalyses();
+  }, []);
+
+  // Calculate real compliance stats from analysis results
+  const complianceStats = useMemo(() => {
+    const results = Object.values(analysisResults);
+    
+    // Default sample values when no analysis exists
+    if (results.length === 0) {
+      return {
+        overallScore: 68,
+        controlsCompliant: 42,
+        totalControls: 93,
+        criticalGaps: 12,
+        maturityLevel: 2,
+        maturityLabel: 'Repeatable',
+        isDefault: true
+      };
+    }
+    
+    // Calculate overall compliance score (average of all analysis scores)
+    const totalScore = results.reduce((sum, r) => sum + (r.compliance_score || 0), 0);
+    const overallScore = Math.round((totalScore / results.length) * 100);
+    
+    // Calculate compliant controls from control_scores
+    let compliantControls = 0;
+    let totalControlsAssessed = 0;
+    
+    results.forEach(r => {
+      const controlScores = r.control_scores || {};
+      Object.values(controlScores).forEach(score => {
+        totalControlsAssessed++;
+        if (score >= 0.7) compliantControls++; // 70%+ = compliant
+      });
+    });
+    
+    // Total ISO 27001:2022 Annex A controls = 93
+    const totalControls = 93;
+    // Extrapolate based on assessed controls
+    const estimatedCompliant = totalControlsAssessed > 0 
+      ? Math.round((compliantControls / totalControlsAssessed) * totalControls)
+      : 0;
+    
+    // Count critical gaps (high priority)
+    let criticalGaps = 0;
+    results.forEach(r => {
+      const gaps = r.gaps || [];
+      gaps.forEach(gap => {
+        const gapLower = gap.toLowerCase();
+        if (gapLower.includes('missing') || gapLower.includes('no evidence') || gapLower.includes('not defined')) {
+          criticalGaps++;
+        }
+      });
+    });
+    
+    // Determine maturity level based on overall score
+    let maturityLevel, maturityLabel;
+    if (overallScore >= 90) {
+      maturityLevel = 5;
+      maturityLabel = 'Optimized';
+    } else if (overallScore >= 75) {
+      maturityLevel = 4;
+      maturityLabel = 'Managed';
+    } else if (overallScore >= 60) {
+      maturityLevel = 3;
+      maturityLabel = 'Defined';
+    } else if (overallScore >= 40) {
+      maturityLevel = 2;
+      maturityLabel = 'Repeatable';
+    } else if (overallScore > 0) {
+      maturityLevel = 1;
+      maturityLabel = 'Initial';
+    } else {
+      maturityLevel = 0;
+      maturityLabel = 'Not Assessed';
+    }
+    
+    return {
+      overallScore,
+      controlsCompliant: estimatedCompliant,
+      totalControls,
+      criticalGaps,
+      maturityLevel,
+      maturityLabel,
+      isDefault: false
+    };
+  }, [analysisResults]);
+
+  // Get top gaps for remediation section
+  const topGaps = useMemo(() => {
+    const allGaps = [];
+    Object.values(analysisResults).forEach(result => {
+      const gaps = result.gaps || [];
+      gaps.forEach(gap => {
+        const gapLower = gap.toLowerCase();
+        let priority = 'medium';
+        if (gapLower.includes('missing') || gapLower.includes('no evidence') || gapLower.includes('not defined')) {
+          priority = 'high';
+        } else if (gapLower.includes('partial') || gapLower.includes('consider') || gapLower.includes('enhance')) {
+          priority = 'low';
+        }
+        allGaps.push({ text: gap, priority, checklist: result.checklist_title });
+      });
+    });
+    
+    // Sort by priority (high first)
+    allGaps.sort((a, b) => {
+      const order = { high: 0, medium: 1, low: 2 };
+      return order[a.priority] - order[b.priority];
+    });
+    
+    return allGaps.slice(0, 3); // Top 3 gaps
+  }, [analysisResults]);
 
   const handleLogout = () => {
     logout();
@@ -295,11 +434,35 @@ export default function Dashboard() {
     (key) => uploadedFiles[key]?.length > 0
   ).length;
 
-  const complianceStats = [
-    { label: "Overall Score", value: "68%", color: "text-red-400" },
-    { label: "Annex A Controls", value: "42/93", color: "text-red-300" },
-    { label: "Critical Gaps", value: "12", color: "text-yellow-300" },
-    { label: "Maturity Level", value: "Level 2", color: "text-orange-300" },
+  // Get score color based on value
+  const getScoreColor = (score) => {
+    if (score >= 75) return 'text-green-400';
+    if (score >= 50) return 'text-yellow-400'; 
+    if (score > 0) return 'text-red-400';
+    return 'text-gray-400';
+  };
+
+  const statsCards = [
+    { 
+      label: "Overall Score", 
+      value: loadingStats ? '...' : `${complianceStats.overallScore}%`,
+      color: getScoreColor(complianceStats.overallScore)
+    },
+    { 
+      label: "Annex A Controls", 
+      value: loadingStats ? '...' : `${complianceStats.controlsCompliant}/${complianceStats.totalControls}`,
+      color: complianceStats.controlsCompliant >= 70 ? 'text-green-400' : complianceStats.controlsCompliant >= 40 ? 'text-yellow-400' : 'text-red-400'
+    },
+    { 
+      label: "Critical Gaps", 
+      value: loadingStats ? '...' : `${complianceStats.criticalGaps}`,
+      color: complianceStats.criticalGaps === 0 ? 'text-green-400' : complianceStats.criticalGaps <= 5 ? 'text-yellow-400' : 'text-red-400'
+    },
+    { 
+      label: "Maturity Level", 
+      value: loadingStats ? '...' : `Level ${complianceStats.maturityLevel}`,
+      color: complianceStats.maturityLevel >= 4 ? 'text-green-400' : complianceStats.maturityLevel >= 3 ? 'text-yellow-400' : 'text-orange-400'
+    },
   ];
 
   return (
@@ -374,13 +537,29 @@ export default function Dashboard() {
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          {complianceStats.map((stat, index) => (
-            <div key={index} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-              <p className="text-sm text-gray-500 font-medium">{stat.label}</p>
+          {statsCards.map((stat, index) => (
+            <div key={index} className={`bg-gradient-to-br from-gray-800 to-gray-900 p-6 rounded-xl shadow-lg border ${complianceStats.isDefault ? 'border-yellow-500/30' : 'border-white/10'}`}>
+              <p className="text-sm text-gray-400 font-medium">{stat.label}</p>
               <p className={`text-3xl font-bold mt-2 ${stat.color}`}>{stat.value}</p>
+              {stat.label === 'Maturity Level' && !loadingStats && (
+                <p className="text-xs text-gray-500 mt-1">{complianceStats.maturityLabel}</p>
+              )}
+              {complianceStats.isDefault && index === 0 && (
+                <p className="text-xs text-yellow-400 mt-1">Sample Data</p>
+              )}
             </div>
           ))}
         </div>
+        {complianceStats.isDefault && !loadingStats && (
+          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-3 mb-6 flex items-center gap-2">
+            <svg className="w-4 h-4 text-yellow-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p className="text-yellow-200 text-sm">
+              Showing sample compliance data. Upload and analyze your ISMS documents to see your real compliance scores.
+            </p>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Upload Section with Accordion */}
@@ -621,18 +800,57 @@ export default function Dashboard() {
           <section className="bg-white/10 p-6 rounded-3xl shadow-2xl border border-white/10">
             <h3 className="text-lg font-bold text-white mb-4">Urgent Remediation</h3>
             <div className="space-y-4">
-              <div className="p-3 bg-red-50 border-l-4 border-red-500">
-                <p className="text-xs font-bold text-red-700">HIGH PRIORITY</p>
-                <p className="text-sm text-gray-800">Annex A.8.10: Information Deletion policy missing.</p>
-              </div>
-              <div className="p-3 bg-orange-50 border-l-4 border-orange-500">
-                <p className="text-xs font-bold text-orange-700">MEDIUM PRIORITY</p>
-                <p className="text-sm text-gray-800">Clause 6.2: ISMS Objectives not documented.</p>
-              </div>
-              <div className="p-3 bg-blue-50 border-l-4 border-blue-500">
-                <p className="text-xs font-bold text-blue-700">TIP</p>
-                <p className="text-sm text-gray-800">Review Access Control logs for Annex A.8.3.</p>
-              </div>
+              {topGaps.length > 0 ? (
+                topGaps.map((gap, index) => (
+                  <div 
+                    key={index} 
+                    className={`p-3 border-l-4 ${
+                      gap.priority === 'high' ? 'bg-red-500/10 border-red-500' :
+                      gap.priority === 'medium' ? 'bg-orange-500/10 border-orange-500' :
+                      'bg-blue-500/10 border-blue-500'
+                    }`}
+                  >
+                    <p className={`text-xs font-bold ${
+                      gap.priority === 'high' ? 'text-red-400' :
+                      gap.priority === 'medium' ? 'text-orange-400' :
+                      'text-blue-400'
+                    }`}>
+                      {gap.priority.toUpperCase()} PRIORITY
+                    </p>
+                    <p className="text-sm text-gray-200 mt-1">{gap.text}</p>
+                    <p className="text-xs text-gray-500 mt-1">{gap.checklist}</p>
+                  </div>
+                ))
+              ) : (
+                <>
+                  <div className="p-3 bg-red-500/10 border-l-4 border-red-500">
+                    <p className="text-xs font-bold text-red-400">HIGH PRIORITY</p>
+                    <p className="text-sm text-gray-200 mt-1">Annex A.8.10: Information Deletion policy missing.</p>
+                    <p className="text-xs text-gray-500 mt-1">A.8 Asset Management</p>
+                  </div>
+                  <div className="p-3 bg-orange-500/10 border-l-4 border-orange-500">
+                    <p className="text-xs font-bold text-orange-400">MEDIUM PRIORITY</p>
+                    <p className="text-sm text-gray-200 mt-1">Clause 6.2: ISMS Objectives not documented.</p>
+                    <p className="text-xs text-gray-500 mt-1">A.5 Information Security Policies</p>
+                  </div>
+                  <div className="p-3 bg-yellow-500/10 border-l-4 border-yellow-500">
+                    <p className="text-xs font-bold text-yellow-400">LOW PRIORITY</p>
+                    <p className="text-sm text-gray-200 mt-1">Consider enhancing security awareness training frequency.</p>
+                    <p className="text-xs text-gray-500 mt-1">A.7 Human Resource Security</p>
+                  </div>
+                  <div className="p-3 bg-blue-500/10 border-l-4 border-blue-500">
+                    <p className="text-xs font-bold text-blue-400">TIP</p>
+                    <p className="text-sm text-gray-200 mt-1">Review Access Control logs for Annex A.8.3.</p>
+                    <p className="text-xs text-gray-500 mt-1">A.9 Access Control</p>
+                  </div>
+                </>
+              )}
+              <Link 
+                to="/gap-analysis" 
+                className="block text-center text-sm text-red-400 hover:text-red-300 mt-4"
+              >
+                View all gaps →
+              </Link>
             </div>
           </section>
         </div>
