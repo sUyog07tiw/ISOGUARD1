@@ -151,12 +151,24 @@ class AnalyzeRequestSerializer(serializers.Serializer):
         child=serializers.CharField(),
         help_text="List of uploaded file names"
     )
+    checklist_prompt = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        default="",
+        help_text="Optional custom AI prompt with detailed requirements"
+    )
+    key_controls = serializers.ListField(
+        child=serializers.CharField(),
+        required=False,
+        default=list,
+        help_text="Optional list of key controls to evaluate"
+    )
     
     def validate_checklist_id(self, value):
         """Validate that the checklist ID is valid."""
-        if value < 1 or value > 5:  # Currently support 5 checklists
+        if value < 1 or value > 10:  # Support 10 checklists
             raise serializers.ValidationError(
-                "Invalid checklist ID. Must be between 1 and 5."
+                "Invalid checklist ID. Must be between 1 and 10."
             )
         return value
 

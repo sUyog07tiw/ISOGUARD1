@@ -436,6 +436,361 @@ AUDIT CHECKLIST:
 □ Is there logging and monitoring of access attempts?
 □ Are failed login attempts monitored and acted upon?""",
     },
+    6: {
+        "id": 6,
+        "title": "Annex A 5.7 - Threat Intelligence",
+        "controls": [
+            "A.5.7 Threat intelligence collection",
+            "A.5.7.1 Strategic threat intelligence",
+            "A.5.7.2 Operational threat intelligence",
+            "A.5.7.3 Tactical threat intelligence",
+            "A.5.7.4 Threat intelligence integration",
+        ],
+        "keywords": [
+            "threat intelligence",
+            "threat feeds",
+            "indicators of compromise",
+            "IoC",
+            "TTPs",
+            "tactics techniques procedures",
+            "SIEM",
+            "SOAR",
+            "threat modeling",
+            "threat landscape",
+            "threat actors",
+            "cyber threat",
+            "actionable intelligence",
+        ],
+        "requirements": """ISO 27001:2022 Annex A 5.7 - Threat Intelligence Requirements:
+
+KEY REQUIREMENTS:
+1. Documented Process: Organizations must implement a documented, consistent process to gather, analyze, and disseminate threat intelligence.
+
+2. Three Levels of Intelligence:
+   - Strategic: High-level trends and threat actor tactics
+   - Operational: Specific tactics, techniques, and procedures (TTPs)
+   - Tactical: Technical Indicators of Compromise (IoCs) such as IPs and file hashes
+
+3. Proactive Defense: Information must be used to improve security posture and inform risk assessments, not just for reactive incident response.
+
+4. Actionable Insights: Information should be refined into actionable intelligence, ensuring it is relevant to the organization's specific threat landscape.
+
+5. Integration: Threat intelligence should be integrated into existing workflows, such as SIEM, SOAR, or threat modeling, to enhance decision-making.
+
+AUDIT CHECKLIST:
+□ Is there a documented threat intelligence policy/procedure?
+□ Are threat intelligence sources identified and documented?
+□ Is strategic-level threat intelligence gathered (trends, threat actors)?
+□ Is operational-level threat intelligence gathered (TTPs)?
+□ Is tactical-level threat intelligence gathered (IoCs, IPs, hashes)?
+□ Is threat intelligence used proactively to improve security posture?
+□ Are risk assessments updated based on threat intelligence?
+□ Is threat intelligence refined into actionable insights?
+□ Is threat intelligence integrated with SIEM/SOAR systems?
+□ Is there a process for disseminating threat intelligence to relevant teams?
+□ Are threat intelligence sources reviewed for reliability?
+□ Is there evidence of threat intelligence influencing security decisions?""",
+    },
+    7: {
+        "id": 7,
+        "title": "Annex A 6.1 - Screening",
+        "controls": [
+            "A.6.1 Background verification checks",
+            "A.6.1.1 Identity verification",
+            "A.6.1.2 Qualification verification",
+            "A.6.1.3 Employment history verification",
+            "A.6.1.4 Criminal record checks",
+            "A.6.1.5 Credit checks",
+            "A.6.1.6 Ongoing screening",
+        ],
+        "keywords": [
+            "screening",
+            "background check",
+            "verification",
+            "employment history",
+            "criminal record",
+            "credit check",
+            "identity verification",
+            "qualification",
+            "references",
+            "pre-employment",
+            "personnel security",
+            "vetting",
+        ],
+        "requirements": """ISO 27001:2022 Annex A 6.1 - Screening Requirements:
+
+KEY SCREENING REQUIREMENTS:
+1. Proportionate Approach: Screening must be based on risk, relevant legislation, regulations, and ethics.
+
+2. Prior to Engagement: Checks must be completed before granting access to information systems.
+
+3. Scope: Covers full-time, part-time, temporary staff, and third-party suppliers.
+
+4. Key Verification Areas:
+   - Identity verification (e.g., passport, driving license)
+   - Academic and professional qualifications
+   - Employment history (references)
+   - Criminal record checks (if permitted by law and relevant to the role)
+   - Credit checks (for high-risk, finance-related roles)
+
+5. Ongoing Screening: Background checks should be repeated periodically or when there are significant changes to the risk profile of a role.
+
+NECESSARY DOCUMENTATION:
+- Formal Personnel Screening Policy defining procedures, criteria, and responsible roles
+- Evidence of Compliance: Records showing screening was completed (audit logs, HR signed statements)
+- Supplier Contracts: Evidence that screening requirements are included in third-party contracts
+
+AUDIT FAILURE POINTS:
+- No documented screening procedures for all staff
+- Screening was done but no evidence was retained
+- Background checks not tailored to the risk level of the role
+
+AUDIT CHECKLIST:
+□ Is there a formal personnel screening policy?
+□ Is screening proportionate to the risk level of the role?
+□ Is screening completed before access is granted to information systems?
+□ Does screening cover all staff types (full-time, part-time, temporary)?
+□ Are third-party suppliers subject to screening requirements?
+□ Is identity verification performed (passport, ID)?
+□ Are qualifications verified?
+□ Are employment references checked?
+□ Are criminal record checks performed where appropriate?
+□ Are credit checks performed for high-risk financial roles?
+□ Is there evidence of screening completion retained?
+□ Is ongoing/periodic screening performed?
+□ Are screening requirements included in supplier contracts?""",
+    },
+    8: {
+        "id": 8,
+        "title": "Annex A 7.4 - Physical Security Monitoring",
+        "controls": [
+            "A.7.4 Physical security monitoring",
+            "A.7.4.1 Video surveillance systems",
+            "A.7.4.2 Intrusion detection systems",
+            "A.7.4.3 Alarm systems configuration",
+            "A.7.4.4 Surveillance system protection",
+        ],
+        "keywords": [
+            "physical security",
+            "CCTV",
+            "surveillance",
+            "monitoring",
+            "intrusion detection",
+            "alarm",
+            "motion detector",
+            "access control",
+            "security camera",
+            "physical access",
+            "premises",
+            "restricted area",
+        ],
+        "requirements": """ISO 27001:2022 Annex A 7.4 - Physical Security Monitoring Requirements:
+
+PURPOSE:
+Implement appropriate surveillance tools to detect and prevent external and internal intruders from entering restricted physical areas.
+
+SURVEILLANCE TOOLS MUST PROTECT AGAINST:
+- Data theft
+- Loss of information assets
+- Financial damage
+- Removal of removable media
+- Malware infection of IT assets
+- Ransomware attacks by intruders
+
+THREE IMPLEMENTATION STEPS:
+
+1. Video Monitoring System:
+   - CCTV cameras for continuous monitoring of restricted areas
+   - Records of all entries and exits on premises
+
+2. Intrusion Detection - Install detectors to trigger alarms:
+   - Contact detectors: Trigger alarm when unknown object contacts doors/windows
+   - Motion detectors: Alert when movement detected in range
+   - Sound detectors: Break glass detectors for intrusion attempts
+
+3. Alarm Configuration:
+   - Ensure all sensitive areas are within alarm range
+   - Cover external doors, windows, unoccupied areas, computer rooms
+   - Don't forget smoking areas, gym entrances, etc.
+
+SURVEILLANCE SYSTEM TYPES:
+- CCTV cameras
+- Security guards
+- Intruder alarm systems
+- Physical security management software
+
+SUPPLEMENTARY GUIDANCE:
+- Keep monitoring system design confidential
+- Implement measures to prevent remote disabling of systems
+- Alarm control panel in alarm-equipped area with safe exit access
+- Use tamper-proof detectors
+- Comply with data protection laws (GDPR) for surveillance recordings
+
+AUDIT CHECKLIST:
+□ Are all restricted areas identified?
+□ Is there a video surveillance system (CCTV) in place?
+□ Are entries and exits to premises recorded?
+□ Are intrusion detection systems installed (motion, contact, sound)?
+□ Are alarm systems properly configured for all sensitive areas?
+□ Is the alarm control panel in a secure, accessible location?
+□ Are detectors tamper-proof?
+□ Is surveillance system design kept confidential?
+□ Are measures in place to prevent remote disabling?
+□ Does surveillance comply with data protection laws (GDPR)?
+□ Are surveillance recordings retained per legal requirements?
+□ Is there regular testing of monitoring systems?""",
+    },
+    9: {
+        "id": 9,
+        "title": "Annex A 8.18 - Use of Privileged Utility Programs",
+        "controls": [
+            "A.8.18 Privileged utility program control",
+            "A.8.18.1 Identification of privileged utilities",
+            "A.8.18.2 Authorization controls",
+            "A.8.18.3 Usage logging and monitoring",
+            "A.8.18.4 Just-in-time access",
+        ],
+        "keywords": [
+            "privileged utility",
+            "admin tools",
+            "debugger",
+            "disk editor",
+            "network analyzer",
+            "packet sniffer",
+            "privileged access",
+            "PAM",
+            "just-in-time",
+            "separation of duties",
+            "system tools",
+            "administrative tools",
+        ],
+        "requirements": """ISO 27001:2022 Annex A 8.18 - Use of Privileged Utility Programs Requirements:
+
+PURPOSE:
+Strict control over utility programs that can override system security (debuggers, admin tools) to prevent unauthorized changes, data breaches, and system instability.
+
+KEY REQUIREMENTS & IMPLEMENTATION:
+
+1. Identify & Restrict:
+   - Identify all tools capable of bypassing controls (disk editors, network analyzers)
+   - Limit access to these tools
+
+2. Authorization:
+   - Ensure privileged utilities are only used by authorized personnel
+   - Not accessible from standard user accounts
+
+3. Logging:
+   - Implement comprehensive, granular logging of all actions
+   - Log who used tools and when
+
+4. Just-in-Time Access:
+   - Use Privileged Access Management (PAM) tools
+   - Temporary elevation of privileges, reducing long-term exposure
+
+5. Separation of Duties:
+   - Users authorized to use utilities must be different from those who authorize their use
+
+EXAMPLES OF COVERED PROGRAMS:
+- Backup and restore software
+- Disk defragmenters and editor tools
+- Network management and diagnostic tools (packet sniffers, SIEM)
+- Debuggers and system modification tools
+- Antivirus/anti-malware software
+
+AUDIT EVIDENCE REQUIRED:
+- Policy/procedure defining authorized privileged utility programs
+- Access request logs and authorization records
+- Audit logs showing who used tools and when
+- Documentation of periodic reviews of user access rights
+
+AUDIT CHECKLIST:
+□ Are all privileged utility programs identified and inventoried?
+□ Is there a policy defining authorized privileged utility programs?
+□ Is access to privileged utilities restricted to authorized personnel only?
+□ Are privileged utilities not accessible from standard user accounts?
+□ Is comprehensive logging implemented for utility usage?
+□ Are all actions performed by privileged utilities logged?
+□ Is Just-in-Time (JIT) access implemented via PAM tools?
+□ Is there separation of duties (users vs. authorizers)?
+□ Are access request logs and authorization records maintained?
+□ Are periodic reviews of access rights conducted?
+□ Are privileged utilities protected from unauthorized modification?""",
+    },
+    10: {
+        "id": 10,
+        "title": "Annex A 8.2 - Access Rights",
+        "controls": [
+            "A.8.2 Access rights management",
+            "A.8.2.1 User access provisioning",
+            "A.8.2.2 Access rights authorization",
+            "A.8.2.3 Access rights revocation",
+            "A.8.2.4 Periodic access reviews",
+        ],
+        "keywords": [
+            "access rights",
+            "provisioning",
+            "authorization",
+            "revocation",
+            "access review",
+            "privilege creep",
+            "least privilege",
+            "user access",
+            "access control",
+            "system access",
+            "offboarding",
+            "role change",
+        ],
+        "requirements": """ISO 27001 Annex A 8.2 (2022) / A.9.2 (2013) - Access Rights Management Requirements:
+
+PURPOSE:
+Formal, documented process to manage user access rights including provisioning, reviewing, and revoking access.
+
+KEY ASPECTS:
+
+1. Provisioning Process:
+   - Formal process for granting and removing access
+   - Applies to all users (employees and third parties)
+
+2. Authorization:
+   - Access must be authorized by system owners
+   - Checks to ensure access is appropriate for the role
+
+3. Prompt Revocation:
+   - Access rights must be revoked immediately when users change roles or leave
+   - Timely response to role changes
+
+4. Privileged Access:
+   - Specific, strict controls needed for privileged access (system administrators)
+   - Higher risk requires stronger controls
+
+5. Periodic Review:
+   - Access rights reviewed periodically
+   - Prevent "privilege creep"
+   - Ensure continued appropriateness
+
+DOCUMENTATION REQUIRED:
+- Central record or database of access privileges
+- Documented procedures for user access provisioning
+- Logs of changes to access rights
+- Evidence of periodic access reviews
+- Authorization records from system owners
+
+NOTE: In ISO 27001:2022, this control is covered under Annex A 5.18 (Access Rights) and A 5.15 (Access Control).
+
+AUDIT CHECKLIST:
+□ Is there a formal user access provisioning process?
+□ Are access rights authorized by system owners?
+□ Is there documentation of access authorization requests?
+□ Are access rights revoked promptly upon role change or termination?
+□ Is there a central record/database of access privileges?
+□ Are privileged access rights subject to stricter controls?
+□ Are periodic access reviews conducted?
+□ Is there evidence of access review completion?
+□ Are changes to access rights logged?
+□ Is there a process to prevent privilege creep?
+□ Are third-party access rights managed and reviewed?
+□ Is there a documented offboarding process for access revocation?""",
+    },
 }
 
 

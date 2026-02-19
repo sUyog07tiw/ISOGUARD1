@@ -7,33 +7,443 @@ import api from "../../utils/api";
 const checklists = [
   { 
     id: 1, 
-    title: "A.5 Information Security Policies", 
-    description: "Policy framework including business strategy alignment, compliance commitments, security objectives, and role-based responsibilities.",
-    keyControls: ["Policy definition", "Security objectives", "Compliance commitment", "Continual improvement", "Topic-specific policies"]
+    title: "Annex A 5.1 - Policies for Information Security", 
+    description: "Management direction and support for information security in accordance with business requirements and relevant laws and regulations.",
+    keyControls: ["Policy Definition", "Management Approval", "Policy Communication", "Scheduled Reviews", "Topic-Specific Policies", "Compliance Commitments"],
+    domain: "Organisational Controls",
+    aiPrompt: `ISO 27001:2022 Annex A 5.1 - Policies for Information Security:
+
+OVERVIEW:
+ISO 27001:2022 Annex A 5.1 requires organizations to define, approve, publish, and communicate a top-level information security policy along with topic-specific policies (e.g., access control, remote working). These policies must be authorized by management, reviewed regularly, and communicated to relevant personnel, providing a foundation for security governance, risk management, and regulatory compliance.
+
+KEY REQUIREMENTS:
+1. Policy Content & Structure:
+   - An overarching Information Security Policy should be complemented by specific policies
+   - Target identified risks and compliance requirements (e.g., password policies, data classification)
+   - Clear definition of information security scope and objectives
+
+2. Management Approval:
+   - Policies must be approved by senior management
+   - Ensures organizational backing and commitment
+   - Formal authorization and sign-off required
+
+3. Communication & Awareness:
+   - Policies must be disseminated to employees and relevant stakeholders
+   - Evidence of acknowledgement required (e.g., sign-off, training records)
+   - Regular awareness training on policy content
+
+4. Regular Review:
+   - Policies should be reviewed at planned intervals
+   - Review when significant changes occur
+   - Ensure policies remain relevant and accurate
+
+5. Alignment:
+   - Policies must align with business needs
+   - Conform to contractual obligations
+   - Meet legal/regulatory requirements
+
+COMMON PITFALLS TO AVOID:
+- Using generic templates without customization
+- Failing to review policies annually
+- Not communicating updates to staff
+- Lack of version control
+- No evidence of acknowledgement
+
+AUDIT CHECKLIST:
+□ Is there a documented top-level information security policy?
+□ Are topic-specific policies defined (access control, remote working, etc.)?
+□ Is the policy approved by senior management?
+□ Is there evidence of management authorization?
+□ Has the policy been communicated to all relevant personnel?
+□ Is there evidence of acknowledgement (sign-off, training records)?
+□ Is there a scheduled review process?
+□ When was the last policy review conducted?
+□ Does the policy align with business requirements?
+□ Does it address contractual obligations?
+□ Does it meet legal/regulatory requirements?
+□ Are policy changes communicated to staff?
+□ Is version control maintained?`
   },
   { 
     id: 2, 
-    title: "A.6 Organization of Information Security", 
-    description: "Organizational structure with defined roles, responsibilities, asset ownership, and segregation of duties.",
-    keyControls: ["Roles & responsibilities", "Segregation of duties", "Asset ownership", "Contact with authorities", "Project management"]
+    title: "Annex A 5.2 - Information Security Roles and Responsibilities", 
+    description: "Define and allocate information security roles and responsibilities according to organization needs.",
+    keyControls: ["Role Definition", "Responsibility Allocation", "Authority Assignment", "Competence Requirements", "Documentation", "Accountability"],
+    domain: "Organisational Controls",
+    aiPrompt: `ISO 27001:2022 Annex A 5.2 - Information Security Roles and Responsibilities:
+
+OVERVIEW:
+ISO 27001:2022 Annex A 5.2 requires organizations to define, document, and allocate information security roles and responsibilities to ensure that data protection duties are clearly understood and enforced. Key requirements include assigning ownership for assets, implementing a RACI matrix, ensuring segregation of duties, and maintaining documented evidence for audits.
+
+KEY REQUIREMENTS FOR COMPLIANCE:
+1. Define and Document Roles:
+   - Clearly outline information security tasks
+   - Assign them to specific roles
+   - Include Top Management, security personnel, and general employees
+
+2. Asset Ownership:
+   - Designate owners for all information assets
+   - Ensure day-to-day security responsibility is assigned
+   - Document ownership in asset register
+
+3. Assign Responsibilities:
+   - Create a responsibility matrix (e.g., RACI)
+   - Define who is Responsible, Accountable, Consulted, and Informed
+   - Cover all specific security tasks
+
+4. Communication:
+   - Ensure roles and responsibilities are communicated to all employees
+   - Include relevant stakeholders
+   - Provide regular updates on changes
+
+5. Documentation and Review:
+   - Maintain documented information (job descriptions, security procedures)
+   - Review them regularly
+   - Keep evidence for audits
+
+6. Segregation of Duties:
+   - Ensure conflicting duties are separated
+   - Prevent unauthorized actions
+   - Document segregation requirements
+
+COMMON ROLES TO DEFINE:
+- Top Management: Setting strategy, allocating resources, approving policies
+- Information Security Manager/Officer: Overseeing the ISMS
+- Asset Owners: Responsible for classification and protection of specific data
+- All Employees: Adhering to security policies
+
+BENEFITS:
+- Ensures accountability
+- Reduces risk of security incidents due to neglected tasks
+- Ensures organization has necessary resources to manage security risks
+
+AUDIT CHECKLIST:
+□ Are all information security roles defined and documented?
+□ Is there a responsibility matrix (RACI) in place?
+□ Are asset owners designated for all information assets?
+□ Is there evidence of role communication to employees?
+□ Are job descriptions updated with security responsibilities?
+□ Is there segregation of conflicting duties?
+□ Is Top Management's security role documented?
+□ Is there an Information Security Manager/Officer appointed?
+□ Are roles reviewed regularly?
+□ Is there documented evidence for audit purposes?
+□ Are accountability areas clearly defined?`
   },
   { 
     id: 3, 
-    title: "A.7 Human Resource Security", 
-    description: "Pre-employment screening, awareness training, disciplinary process, and secure termination procedures.",
-    keyControls: ["Background checks", "NDAs", "Security training", "Disciplinary process", "Termination procedures", "Remote working"]
+    title: "Annex A 5.9 - Inventory of Information and Other Associated Assets", 
+    description: "Identify, document, and maintain an inventory of information and other associated assets including their owners.",
+    keyControls: ["Asset Identification", "Asset Register", "Owner Assignment", "Classification Labeling", "Regular Updates", "Lifecycle Management"],
+    isNew: true,
+    domain: "Organisational Controls",
+    aiPrompt: `ISO 27001:2022 Annex A 5.9 - Inventory of Information and Other Associated Assets (NEW in 2022):
+
+OVERVIEW:
+ISO 27001:2022 Annex A 5.9 requires organizations to create, maintain, and regularly update a comprehensive inventory of all information, software, physical, and services-based assets. Key requirements include assigning ownership, documenting asset locations, and ensuring security controls are applied to protect these assets.
+
+KEY REQUIREMENTS:
+1. Comprehensive Identification:
+   - Identify all information assets
+   - Identify all software assets
+   - Identify all hardware and physical assets
+   - Include assets that store, process, or transmit data
+
+2. Asset Register Maintenance:
+   - Maintain an accurate, up-to-date inventory
+   - Often called an Asset Register or Asset Inventory
+   - Include cloud and remote environment assets
+
+3. Ownership Assignment:
+   - Assign a designated owner for each asset in the inventory
+   - Document ownership accountability
+   - Clear responsibility for asset security
+
+4. Classification:
+   - Classify assets based on importance to the organization
+   - Align with information security policies
+   - Document classification levels
+
+5. Scope:
+   - Physical items: servers, laptops, network equipment
+   - Intangible assets: data sets, software, cloud services
+   - Services: SaaS, IaaS, PaaS
+
+6. Integration:
+   - Inventory should be consistent with other records
+   - Subject to regular reviews
+   - Linked to risk assessments
+
+DIFFERENCES FROM ISO 27001:2013:
+The 2022 update expands the 2013 version (A.8.1.1) to be more explicit about covering a wide range of both information and associated assets (e.g., in cloud/remote environments) to ensure a holistic view of the attack surface.
+
+IMPLEMENTATION TIPS:
+- Use automated tools for tracking in dynamic or cloud environments
+- Ensure inventory includes physical or logical location of assets
+- For smaller companies, integrate asset inventory into risk register
+- Include "Shadow IT" by auditing for assets not formally approved but used for business purposes
+
+AUDIT CHECKLIST:
+□ Is there a documented asset inventory/register?
+□ Does it include all information assets?
+□ Does it include software assets?
+□ Does it include physical/hardware assets?
+□ Does it include cloud services?
+□ Is each asset uniquely identified?
+□ Are asset owners assigned for each asset?
+□ Are asset locations documented (physical or logical)?
+□ Is asset classification documented?
+□ Is the inventory regularly reviewed and updated?
+□ Is there a process for adding new assets?
+□ Is there a process for retiring assets?
+□ Is Shadow IT addressed?
+□ Are automated tracking tools used where applicable?
+□ Is the inventory integrated with risk assessments?`
   },
   { 
     id: 4, 
-    title: "A.8 Asset Management", 
-    description: "Asset inventory, classification, acceptable use, configuration management, and data protection controls.",
-    keyControls: ["Asset inventory", "Classification", "Media handling", "Configuration management", "Data deletion", "DLP"]
+    title: "Annex A 5.10 - Acceptable Use of Information and Other Associated Assets", 
+    description: "Rules for acceptable use of information and other associated assets shall be identified, documented and implemented.",
+    keyControls: ["Usage Rules", "User Agreements", "Return of Assets", "Personal Device Policy", "Monitoring Notice", "Violation Consequences"],
+    domain: "Organisational Controls",
+    aiPrompt: `ISO 27001:2022 Annex A 5.10 - Acceptable Use of Information and Other Associated Assets:
+
+OVERVIEW:
+ISO 27001:2022 Annex A 5.10 requires organizations to identify, document, and implement rules for the acceptable use of information and associated assets (e.g., hardware, software, cloud services) to prevent misuse and secure data. This control mandates a formal policy defining permissible and prohibited actions, including BYOD, for all employees and third parties, with mandatory acknowledgment.
+
+KEY REQUIREMENTS FOR COMPLIANCE:
+1. Documented Policy:
+   - A formal Acceptable Use Policy (AUP) must be approved by management
+   - Cover all information, systems, and devices
+   - Include clear definitions and scope
+
+2. Rules of Use:
+   - Explicitly define rules for handling information
+   - Include email, internet usage, and BYOD/cloud services
+   - Address remote working scenarios
+
+3. Prohibited Activities:
+   - Clearly outline forbidden actions
+   - Unauthorized software installation
+   - Illegal content access
+   - Misuse of company resources for personal, commercial, or unethical purposes
+
+4. Asset Protection:
+   - Define rules for the entire information life cycle
+   - Include storage, handling, and secure disposal
+   - Address data retention requirements
+
+5. User Acknowledgement:
+   - All users (employees, contractors, third parties) must sign or formally accept the policy
+   - Ensure understanding of their responsibilities
+   - Document acknowledgement for audit purposes
+
+6. Monitoring & Enforcement:
+   - Detail how usage is monitored (e.g., network logs, email monitoring)
+   - Define consequences of policy violations
+   - Ensure legal compliance with monitoring
+
+SCOPE OF ASSETS COVERED:
+- Hardware: Laptops, phones, tablets, removable media
+- Software & Services: Applications, cloud services (SaaS), email
+- Networks: Wired and wireless, VPNs
+- Information/Data: Intellectual property, client data, records
+
+AUDIT CHECKLIST:
+□ Is there a documented Acceptable Use Policy (AUP)?
+□ Is the policy approved by management?
+□ Does it cover email and internet usage?
+□ Does it address BYOD requirements?
+□ Does it cover cloud services?
+□ Are prohibited activities clearly defined?
+□ Are rules for the information life cycle documented?
+□ Is secure disposal addressed?
+□ Have all users (employees, contractors) acknowledged the policy?
+□ Is there documented evidence of acknowledgement?
+□ Is monitoring disclosed and legally compliant?
+□ Are consequences of violations clearly stated?
+□ Are third parties included in the policy scope?
+□ Is the policy reviewed and updated regularly?`
   },
   { 
     id: 5, 
-    title: "A.9 Access Control", 
-    description: "Access policy, user management, privileged access, MFA, and system access controls.",
-    keyControls: ["Access policy", "User provisioning", "Privileged access", "MFA", "Access reviews", "Secure log-on"]
+    title: "Annex A 5.12 - Classification of Information", 
+    description: "Information shall be classified according to the organization's information security needs based on confidentiality, integrity, and availability.",
+    keyControls: ["Classification Scheme", "Labeling Procedures", "Handling Rules", "Declassification", "Information Lifecycle", "Third-Party Classification"],
+    domain: "Organisational Controls",
+    aiPrompt: `ISO 27001:2022 Annex A 5.12 - Classification of Information:
+
+OVERVIEW:
+ISO 27001:2022 Annex A 5.12 requires organizations to classify information based on its security needs, including confidentiality, integrity, availability, and stakeholder requirements, ensuring protection is proportional to sensitivity. This control mandates creating a consistent classification scheme, defining handling rules, and managing information throughout its lifecycle to prevent unauthorized disclosure.
+
+KEY REQUIREMENTS AND IMPLEMENTATION:
+1. Classification Criteria:
+   - Information should be categorized based on legal requirements
+   - Consider sensitivity and value to the organization
+   - Assess impact of unauthorized disclosure or modification
+
+2. Scheme Development:
+   - Define a clear, consistent classification scheme
+   - Typical levels: Public, Internal, Confidential, Restricted
+   - Ensure organization-wide consistency
+
+3. Handling Rules:
+   - Establish specific handling procedures for each classification level
+   - Define storage requirements
+   - Define transmission procedures
+   - Include secure disposal requirements
+
+4. Consistency (2022 Update):
+   - The 2022 update emphasizes ensuring consistency in classification
+   - Critical when sharing information between organizations
+   - Align with partner/supplier classification schemes
+
+5. Scope:
+   - Applies to all information assets
+   - Including digital files, physical documents, and databases
+   - Cover structured and unstructured data
+
+BENEFITS OF A.5.12 IMPLEMENTATION:
+- Proportional Security: Efficient allocation of resources by focusing tighter controls on highly sensitive data
+- Improved Risk Management: Facilitates identifying the most critical assets requiring protection
+- Clarity for Employees: Provides clear guidance on how to handle different types of information
+
+RELATED CONTROLS:
+- Annex A 5.13: Labelling of Information
+- Annex A 8.3: Information Access Restriction
+
+AUDIT CHECKLIST:
+□ Is there a documented classification scheme?
+□ Are classification levels clearly defined (e.g., Public, Internal, Confidential, Restricted)?
+□ Is the scheme based on confidentiality, integrity, and availability requirements?
+□ Does it consider legal and regulatory requirements?
+□ Are classification criteria documented?
+□ Are handling rules defined for each classification level?
+□ Are storage requirements specified per level?
+□ Are transmission requirements specified per level?
+□ Are disposal requirements specified per level?
+□ Is there consistency when sharing information with third parties?
+□ Are information owners responsible for classifying their information?
+□ Is there a labeling procedure (A.5.13)?
+□ Are labels applied consistently?
+□ Is there a periodic review and reclassification process?
+□ Is there training on classification requirements?`
+  },
+  { 
+    id: 6, 
+    title: "Annex A 5.7 - Threat Intelligence", 
+    description: "Collect and analyse information about threats to produce threat intelligence for informed security decisions.",
+    keyControls: ["Documented Process", "Strategic Intelligence", "Operational Intelligence", "Tactical Intelligence", "Proactive Defense", "SIEM/SOAR Integration"],
+    isNew: true,
+    domain: "Organisational Controls",
+    aiPrompt: `Key Requirements for ISO 27001:2022 Annex A 5.7 (Threat Intelligence):
+- Documented Process: Organizations must implement a documented, consistent process to gather, analyze, and disseminate threat intelligence.
+- Three Levels of Intelligence:
+  * Strategic: High-level trends and threat actor tactics.
+  * Operational: Specific tactics, techniques, and procedures (TTPs).
+  * Tactical: Technical Indicators of Compromise (IoCs) such as IPs and file hashes.
+- Proactive Defense: Information must be used to improve security posture and inform risk assessments, not just for reactive incident response.
+- Actionable Insights: Information should be refined into actionable intelligence, ensuring it is relevant to the organization's specific threat landscape.
+- Integration: Threat intelligence should be integrated into existing workflows, such as SIEM, SOAR, or threat modeling, to enhance decision-making.
+Audit Evidence Required: Documented threat intelligence policy, evidence of threat feeds/sources, integration with SIEM/SOAR, risk assessment updates based on threat intel.`
+  },
+  { 
+    id: 7, 
+    title: "Annex A 6.1 - Screening", 
+    description: "Background verification checks on all candidates for employment prior to joining the organization.",
+    keyControls: ["Identity Verification", "Qualification Checks", "Employment History", "Criminal Records", "Credit Checks", "Ongoing Screening"],
+    domain: "People Controls",
+    aiPrompt: `Key Screening Requirements (ISO 27001:2022 Annex A 6.1):
+- Proportionate Approach: Screening must be based on risk, relevant legislation, regulations, and ethics.
+- Prior to Engagement: Checks must be completed before granting access to information systems.
+- Scope: Covers full-time, part-time, temporary staff, and third-party suppliers.
+- Key Verification Areas:
+  * Identity verification (e.g., passport, driving license).
+  * Academic and professional qualifications.
+  * Employment history (references).
+  * Criminal record checks (if permitted by law and relevant to the role).
+  * Credit checks (for high-risk, finance-related roles).
+- Ongoing Screening: Background checks should be repeated periodically or when there are significant changes to the risk profile of a role.
+Necessary Documentation (PDF/Policy):
+- Formal Personnel Screening Policy defining procedures, criteria, and responsible roles.
+- Evidence of Compliance: Records showing screening was completed (audit logs, HR signed statements).
+- Supplier Contracts: Evidence that screening requirements are included in third-party contracts.
+Audit Failure Points: No documented screening procedures, no evidence retention, screening not tailored to role risk level.`
+  },
+  { 
+    id: 8, 
+    title: "Annex A 7.4 - Physical Security Monitoring", 
+    description: "Premises shall be continuously monitored for unauthorised physical access attempts.",
+    keyControls: ["CCTV Surveillance", "Intrusion Alarms", "Motion Detectors", "Contact Detectors", "Sound Detectors", "Alarm Configuration"],
+    isNew: true,
+    domain: "Physical Controls",
+    aiPrompt: `ISO 27001:2022 Annex A 7.4 - Physical Security Monitoring Requirements:
+- Purpose: Implement appropriate surveillance tools to detect and prevent external and internal intruders from entering restricted physical areas.
+- Surveillance tools must protect against: Data theft, loss of information assets, financial damage, removal of removable media, malware infection, ransomware attacks.
+Three Implementation Steps:
+1. Video Monitoring System: CCTV cameras for continuous monitoring of restricted areas, with records of all entries and exits.
+2. Intrusion Detection: Motion, sound, and contact detectors to alert security teams:
+   * Contact detectors: Trigger alarm when unknown object contacts doors/windows.
+   * Motion detectors: Alert when movement detected in range.
+   * Sound detectors: Break glass detectors for intrusion attempts.
+3. Alarm Configuration: Ensure all sensitive areas (external doors, windows, unoccupied areas, computer rooms) are within alarm range.
+Surveillance System Types: CCTV cameras, security guards, intruder alarm systems, physical security management software.
+Supplementary Guidance:
+- Keep monitoring system design confidential.
+- Implement measures to prevent remote disabling of systems.
+- Alarm control panel in alarm-equipped area with safe exit access.
+- Use tamper-proof detectors.
+- Comply with data protection laws (GDPR) for surveillance recordings.`
+  },
+  { 
+    id: 9, 
+    title: "Annex A 8.18 - Use of Privileged Utility Programs", 
+    description: "Restrict and tightly control use of utility programs that might be capable of overriding system and application controls.",
+    keyControls: ["Identify & Restrict", "Authorization Controls", "Comprehensive Logging", "Just-in-Time Access", "Separation of Duties", "PAM Tools"],
+    prevControl: "Annex A 9.4.4",
+    domain: "Technological Controls",
+    aiPrompt: `ISO 27001:2022 Annex A 8.18 - Use of Privileged Utility Programs:
+- Purpose: Strict control over utility programs that can override system security (debuggers, admin tools) to prevent unauthorized changes, data breaches, and system instability.
+Key Requirements & Implementation:
+- Identify & Restrict: Identify all tools capable of bypassing controls (disk editors, network analyzers) and limit access.
+- Authorization: Ensure privileged utilities are only used by authorized personnel, not from standard user accounts.
+- Logging: Implement comprehensive, granular logging of all actions performed by these tools.
+- Just-in-Time Access: Use Privileged Access Management (PAM) tools for temporary elevation of privileges.
+- Separation of Duties: Users authorized to use utilities must be different from those who authorize their use.
+Examples of Covered Programs:
+- Backup and restore software
+- Disk defragmenters and editor tools
+- Network management and diagnostic tools (packet sniffers, SIEM)
+- Debuggers and system modification tools
+- Antivirus/anti-malware software
+Audit Evidence Required:
+- Policy/procedure defining authorized privileged utility programs.
+- Access request logs and authorization records.
+- Audit logs showing who used tools and when.
+- Documentation of periodic reviews of user access rights.`
+  },
+  { 
+    id: 10, 
+    title: "Annex A 8.2 - Access Rights", 
+    description: "Provision and revoke access rights to all users for all systems and services in accordance with policy.",
+    keyControls: ["Formal Provisioning Process", "Owner Authorization", "Prompt Revocation", "Privileged Access Controls", "Periodic Reviews", "Privilege Creep Prevention"],
+    prevControl: "Annex A 9.2.2",
+    domain: "Technological Controls",
+    aiPrompt: `ISO 27001 Annex A.9.2 (2013) / A.5.18 & A.8.2 (2022) - Access Rights Management:
+- Purpose: Formal, documented process to manage user access rights including provisioning, reviewing, and revoking access.
+Key Aspects:
+- Provisioning Process: Formal process for granting and removing access for all users (employees and third parties).
+- Authorization: Access must be authorized by system owners, with checks to ensure appropriateness for the role.
+- Prompt Revocation: Access rights must be revoked immediately when users change roles or leave the organization.
+- Privileged Access: Specific, strict controls needed for privileged access (system administrators) due to higher risk.
+- Periodic Review: Access rights reviewed periodically to prevent "privilege creep" and ensure continued appropriateness.
+Documentation Required:
+- Central record or database of access privileges.
+- Documented procedures for user access provisioning.
+- Logs of changes to access rights.
+- Evidence of periodic access reviews.
+- Authorization records from system owners.
+Note: In ISO 27001:2022, this control is covered under Annex A 5.18 (Access Rights) and A 5.15 (Access Control).`
   },
 ];
 
@@ -290,6 +700,8 @@ export default function Dashboard() {
       const response = await api.post('/analyze/', {
         checklist_id: checklistId,
         checklist_title: checklist?.title,
+        checklist_prompt: checklist?.aiPrompt || '',
+        key_controls: checklist?.keyControls || [],
         files: files,
       });
       
@@ -339,6 +751,8 @@ export default function Dashboard() {
           const response = await api.post('/analyze/', {
             checklist_id: checklist.id,
             checklist_title: checklist.title,
+            checklist_prompt: checklist.aiPrompt || '',
+            key_controls: checklist.keyControls || [],
             files: uploadedFiles[checklist.id],
           });
           results.push({ checklist: checklist.title, checklistId: checklist.id, success: true, response });
@@ -613,8 +1027,26 @@ export default function Dashboard() {
                         {checklist.id}
                       </span>
                       <div className="flex-1">
-                        <p className="font-semibold text-white">{checklist.title}</p>
-                        <p className="text-xs text-gray-400">{checklist.description}</p>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-semibold text-white">{checklist.title}</p>
+                          {checklist.isNew && (
+                            <span className="px-2 py-0.5 rounded bg-green-500/20 text-green-400 text-xs font-bold">NEW</span>
+                          )}
+                          {checklist.prevControl && (
+                            <span className="text-xs text-gray-500">← {checklist.prevControl}</span>
+                          )}
+                        </div>
+                        {checklist.domain && (
+                          <div className="flex items-center gap-2 mt-1 flex-wrap">
+                            <span className="text-xs text-red-300 bg-red-900/30 px-2 py-0.5 rounded">{checklist.domain}</span>
+                            {checklist.annexes && (
+                              <span className="text-xs text-blue-300 bg-blue-900/30 px-2 py-0.5 rounded">
+                                {checklist.annexes.length} Controls: {checklist.annexes.slice(0, 3).join(', ')}{checklist.annexes.length > 3 ? '...' : ''}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        <p className="text-xs text-gray-400 mt-1">{checklist.description}</p>
                         {/* Key Controls Tags */}
                         <div className="flex flex-wrap gap-1 mt-2">
                           {checklist.keyControls?.slice(0, 4).map((control, idx) => (

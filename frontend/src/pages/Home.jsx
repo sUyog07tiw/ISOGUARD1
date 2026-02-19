@@ -517,7 +517,7 @@ const Home = () => {
           </div>
 
           {/* New Controls in ISO 27001:2022 */}
-          <div className="bg-gradient-to-br from-red-950/30 to-transparent rounded-3xl p-8 border border-red-500/20">
+          <div className="bg-gradient-to-br from-red-950/30 to-transparent rounded-3xl p-8 border border-red-500/20 mb-12">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center">
                 <span className="text-red-400 font-bold">+11</span>
@@ -533,6 +533,79 @@ const Home = () => {
                 >
                   {control}
                 </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Key Control Checklists */}
+          <div className="bg-gradient-to-br from-white/5 to-transparent rounded-3xl p-8 border border-white/10">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center">
+                <svg className="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold">Key Control Checklists</h3>
+            </div>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[
+                { 
+                  domain: "Organisational Controls", 
+                  control: "Annex A 5.7", 
+                  isNew: true, 
+                  title: "Threat Intelligence",
+                  description: "Collect and analyse information about threats to produce threat intelligence"
+                },
+                { 
+                  domain: "People Controls", 
+                  control: "Annex A 6.1", 
+                  isNew: false, 
+                  title: "Screening",
+                  description: "Background verification checks on candidates prior to joining"
+                },
+                { 
+                  domain: "Physical Controls", 
+                  control: "Annex A 7.4", 
+                  isNew: true, 
+                  title: "Physical Security Monitoring",
+                  description: "Premises shall be continuously monitored for unauthorised access"
+                },
+                { 
+                  domain: "Technological Controls", 
+                  control: "Annex A 8.18", 
+                  isNew: false,
+                  prevControl: "Annex A 9.4.4",
+                  title: "Use of Privileged Utility Programs",
+                  description: "Restrict and tightly control use of utility programs that override controls"
+                },
+                { 
+                  domain: "Technological Controls", 
+                  control: "Annex A 8.2", 
+                  isNew: false,
+                  prevControl: "Annex A 9.2.2",
+                  title: "Access Rights",
+                  description: "Provision and revoke access rights to all users for all systems and services"
+                }
+              ].map((item, index) => (
+                <div 
+                  key={item.control}
+                  className="group p-5 rounded-2xl bg-white/5 border border-white/10 hover:border-red-500/30 transition-all duration-300 hover:bg-white/10"
+                >
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="px-2 py-1 rounded-lg bg-gray-800 text-xs text-gray-400">{item.domain}</span>
+                    {item.isNew && (
+                      <span className="px-2 py-1 rounded-lg bg-green-500/20 text-xs text-green-400 font-medium">NEW</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-red-400 font-mono text-sm">{item.control}</span>
+                    {item.prevControl && (
+                      <span className="text-gray-500 text-xs">← {item.prevControl}</span>
+                    )}
+                  </div>
+                  <h4 className="font-semibold text-white mb-2 group-hover:text-red-300 transition-colors">{item.title}</h4>
+                  <p className="text-sm text-gray-400">{item.description}</p>
+                </div>
               ))}
             </div>
           </div>
