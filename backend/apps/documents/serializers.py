@@ -177,6 +177,7 @@ class AnalysisResultSerializer(serializers.ModelSerializer):
     """Serializer for analysis results."""
     
     documents = DocumentListSerializer(many=True, read_only=True)
+    pdf_report_url = serializers.SerializerMethodField()
     
     class Meta:
         from .models import AnalysisResult
@@ -198,12 +199,24 @@ class AnalysisResultSerializer(serializers.ModelSerializer):
             "created_at",
             "completed_at",
             "documents",
+            "pdf_report_url",
         ]
         read_only_fields = fields
+    
+    def get_pdf_report_url(self, obj):
+        """Return URL for the stored PDF report if available."""
+        if obj.pdf_report:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.pdf_report.url)
+            return obj.pdf_report.url
+        return None
 
 
 class AnalysisResultListSerializer(serializers.ModelSerializer):
     """Lightweight serializer for listing analysis results."""
+    
+    pdf_report_url = serializers.SerializerMethodField()
     
     class Meta:
         from .models import AnalysisResult
@@ -217,6 +230,16 @@ class AnalysisResultListSerializer(serializers.ModelSerializer):
             "compliance_score",
             "created_at",
             "completed_at",
+            "pdf_report_url",
         ]
         read_only_fields = fields
+    
+    def get_pdf_report_url(self, obj):
+        """Return URL for the stored PDF report if available."""
+        if obj.pdf_report:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.pdf_report.url)
+            return obj.pdf_report.url
+        return None
         

@@ -30,13 +30,12 @@ django-ratelimit==4.1.0
 django-auditlog==2.3.0
 
 # PDF Generation
-reportlab==4.0.8
-xhtml2pdf==0.2.11
+reportlab>=4.0.0
 
 # LLM Integration
 openai==1.6.1
 anthropic==0.8.1
-tiktoken==0.5.2
+# tiktoken==0.5.2  # Optional: requires Rust compiler to build
 
 # Testing
 pytest==7.4.4

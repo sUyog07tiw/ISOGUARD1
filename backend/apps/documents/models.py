@@ -201,6 +201,15 @@ class AnalysisResult(models.Model):
     # Error handling
     error_message = models.TextField(blank=True, null=True)
     
+    # AI Generated PDF Report
+    pdf_report = models.FileField(
+        upload_to="reports/%Y/%m/%d/",
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="AI-generated PDF audit report"
+    )
+    
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(blank=True, null=True)

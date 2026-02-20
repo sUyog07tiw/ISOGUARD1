@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.utils.html import format_html
+from django.utils.html import format_html, mark_safe, escape
 import json
 from .models import Document, DocumentChunk, AnalysisResult
 
@@ -106,6 +106,7 @@ class AnalysisResultAdmin(admin.ModelAdmin):
         "compliance_status_badge",
         "compliance_score_display",
         "status",
+        "has_pdf",
         "created_at",
         "analyzed_by",
     ]
@@ -123,6 +124,7 @@ class AnalysisResultAdmin(admin.ModelAdmin):
         "created_at",
         "completed_at",
         "documents_list",
+        "pdf_report_link",
     ]
     filter_horizontal = ["documents"]
     
@@ -172,6 +174,10 @@ class AnalysisResultAdmin(admin.ModelAdmin):
             "classes": ("collapse",),
             "description": "Raw JSON data stored in database"
         }),
+        ("PDF Report", {
+            "fields": ("pdf_report", "pdf_report_link"),
+            "description": "AI-generated PDF audit report"
+        }),
         ("Timestamps", {
             "fields": ("created_at", "completed_at")
         }),
@@ -183,7 +189,7 @@ class AnalysisResultAdmin(admin.ModelAdmin):
     def compliance_status_badge(self, obj):
         """Display compliance status as a colored badge."""
         if not obj.compliance_status:
-            return format_html('<span style="color: gray;">Pending</span>')
+            return mark_safe('<span style="color: gray;">Pending</span>')
         
         colors = {
             "compliant": "#28a745",       # Green
@@ -202,16 +208,17 @@ class AnalysisResultAdmin(admin.ModelAdmin):
     
     def compliance_score_display(self, obj):
         """Display compliance score as a percentage with color."""
-        score = obj.compliance_score * 100
+        score = obj.compliance_score * 100 if obj.compliance_score else 0
         if score >= 80:
             color = "#28a745"
         elif score >= 50:
             color = "#ffc107"
         else:
             color = "#dc3545"
+        score_text = f"{score:.1f}%"
         return format_html(
-            '<span style="color: {}; font-weight: bold;">{:.1f}%</span>',
-            color, score
+            '<span style="color: {}; font-weight: bold;">{}</span>',
+            color, score_text
         )
     compliance_score_display.short_description = "Score"
     compliance_score_display.admin_order_field = "compliance_score"
@@ -221,23 +228,24 @@ class AnalysisResultAdmin(admin.ModelAdmin):
         docs = obj.documents.all()
         if not docs:
             return "No documents"
-        return format_html("<br>".join([f"• {doc.name}" for doc in docs]))
+        items = "<br>".join([f"• {escape(doc.name)}" for doc in docs])
+        return mark_safe(items)
     documents_list.short_description = "Analyzed Documents"
     
     def _format_json_list(self, data):
         """Format a JSON list as HTML."""
         if not data:
-            return format_html('<span style="color: gray;">No data</span>')
+            return mark_safe('<span style="color: gray;">No data</span>')
         
         if isinstance(data, list):
-            items = "".join([f"<li style='margin-bottom: 8px;'>{item}</li>" for item in data])
-            return format_html(f"<ul style='margin: 0; padding-left: 20px;'>{items}</ul>")
+            items = "".join([f"<li style='margin-bottom: 8px;'>{escape(str(item))}</li>" for item in data])
+            return mark_safe(f"<ul style='margin: 0; padding-left: 20px;'>{items}</ul>")
         return format_html("<pre>{}</pre>", json.dumps(data, indent=2))
     
     def _format_json_dict(self, data):
         """Format a JSON dict as HTML table."""
         if not data:
-            return format_html('<span style="color: gray;">No data</span>')
+            return mark_safe('<span style="color: gray;">No data</span>')
         
         if isinstance(data, dict):
             rows = ""
@@ -252,9 +260,9 @@ class AnalysisResultAdmin(admin.ModelAdmin):
                         color = "#dc3545"
                     value_html = f'<span style="color: {color}; font-weight: bold;">{score:.1f}%</span>'
                 else:
-                    value_html = str(value)
-                rows += f"<tr><td style='padding: 4px 8px; border: 1px solid #ddd;'><strong>{key}</strong></td><td style='padding: 4px 8px; border: 1px solid #ddd;'>{value_html}</td></tr>"
-            return format_html(f"<table style='border-collapse: collapse; width: 100%;'>{rows}</table>")
+                    value_html = escape(str(value))
+                rows += f"<tr><td style='padding: 4px 8px; border: 1px solid #ddd;'><strong>{escape(str(key))}</strong></td><td style='padding: 4px 8px; border: 1px solid #ddd;'>{value_html}</td></tr>"
+            return mark_safe(f"<table style='border-collapse: collapse; width: 100%;'>{rows}</table>")
         return format_html("<pre>{}</pre>", json.dumps(data, indent=2))
     
     def findings_display(self, obj):
@@ -276,6 +284,24 @@ class AnalysisResultAdmin(admin.ModelAdmin):
     def control_scores_display(self, obj):
         return self._format_json_dict(obj.control_scores)
     control_scores_display.short_description = "Control Scores"
+    
+    def pdf_report_link(self, obj):
+        """Display a link to download the PDF report."""
+        if obj.pdf_report:
+            return format_html(
+                '<a href="{}" target="_blank" style="background-color: #dc3545; color: white; padding: 5px 15px; border-radius: 4px; text-decoration: none;">📄 Download PDF Report</a>',
+                obj.pdf_report.url
+            )
+        return mark_safe('<span style="color: gray;">No PDF generated yet</span>')
+    pdf_report_link.short_description = "PDF Report"
+    
+    def has_pdf(self, obj):
+        """Display if PDF report is available."""
+        if obj.pdf_report:
+            return mark_safe('<span style="color: #28a745; font-weight: bold;">✓ PDF</span>')
+        return mark_safe('<span style="color: #dc3545;">✗</span>')
+    has_pdf.short_description = "PDF"
+    has_pdf.admin_order_field = "pdf_report"
     
     def has_add_permission(self, request):
         """Disable adding analysis results manually - they should come from API."""

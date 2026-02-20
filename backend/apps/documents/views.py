@@ -373,18 +373,21 @@ class ExportAuditReportView(APIView):
     Query params:
         - checklist_ids: Comma-separated list of checklist IDs (optional, defaults to all)
         - organization: Organization name (optional)
+        - regenerate: If "true", force regenerate PDF even if cached (optional)
     """
     
     permission_classes = [permissions.AllowAny]  # Change to IsAuthenticated in production
     
     def get(self, request):
         """Generate and download a PDF audit report."""
+        from django.core.files.base import ContentFile
         
         print("\n[EXPORT] PDF Report generation requested")
         
         # Get query parameters
         checklist_ids_param = request.query_params.get("checklist_ids", "")
         organization_name = request.query_params.get("organization", "Organization")
+        regenerate = request.query_params.get("regenerate", "").lower() == "true"
         
         try:
             # Parse checklist IDs
@@ -415,6 +418,16 @@ class ExportAuditReportView(APIView):
                     status=status.HTTP_404_NOT_FOUND
                 )
             
+            # For single checklist, try to return stored PDF
+            if checklist_ids and len(checklist_ids) == 1 and not regenerate:
+                result = latest_results.get(checklist_ids[0])
+                if result and result.pdf_report:
+                    print(f"[EXPORT] Serving stored PDF for checklist {checklist_ids[0]}")
+                    response = HttpResponse(result.pdf_report.read(), content_type='application/pdf')
+                    filename = f"ISOGUARD_{result.checklist_title.replace(' ', '_')}.pdf"
+                    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+                    return response
+            
             # Convert to list of dicts for PDF generator
             analysis_data = []
             for cid in sorted(latest_results.keys()):
@@ -439,6 +452,16 @@ class ExportAuditReportView(APIView):
             pdf_bytes = generate_audit_report_pdf(analysis_data, organization_name)
             
             print(f"[EXPORT] PDF generated successfully ({len(pdf_bytes)} bytes)")
+            
+            # Save PDF to AnalysisResult for single checklist
+            if checklist_ids and len(checklist_ids) == 1:
+                result = latest_results.get(checklist_ids[0])
+                if result:
+                    # Use short filename to avoid max_length issues
+                    short_id = str(result.id)[:8]
+                    filename = f"report_{result.checklist_id}_{short_id}.pdf"
+                    result.pdf_report.save(filename, ContentFile(pdf_bytes), save=True)
+                    print(f"[EXPORT] PDF saved to AnalysisResult {result.id}")
             
             # Create HTTP response with PDF
             response = HttpResponse(pdf_bytes, content_type='application/pdf')
