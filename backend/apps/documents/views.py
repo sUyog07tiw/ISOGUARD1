@@ -55,7 +55,7 @@ class DocumentViewSet(viewsets.ModelViewSet):
     """
     
     queryset = Document.objects.all()
-    permission_classes = [permissions.AllowAny]  # Change to IsAuthenticated in production
+    permission_classes = [permissions.IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
     
     def get_serializer_class(self):
@@ -68,7 +68,8 @@ class DocumentViewSet(viewsets.ModelViewSet):
         return DocumentSerializer
     
     def get_queryset(self):
-        queryset = Document.objects.all()
+        # Filter documents by the authenticated user
+        queryset = Document.objects.filter(uploaded_by=self.request.user)
         
         # Filter by status
         status_filter = self.request.query_params.get("status")
@@ -94,12 +95,12 @@ class DocumentViewSet(viewsets.ModelViewSet):
             file_content = uploaded_file.read()
             file_type = get_file_type(uploaded_file.name)
             
-            # Create document record
+            # Create document record (user is guaranteed authenticated)
             document = Document.objects.create(
                 name=uploaded_file.name,
                 file_type=file_type,
                 file_size=len(file_content),
-                uploaded_by=request.user if request.user.is_authenticated else None,
+                uploaded_by=request.user,
                 status=Document.Status.PENDING
             )
             
@@ -207,7 +208,7 @@ class DocumentChunkViewSet(viewsets.ReadOnlyModelViewSet):
     """
     
     queryset = DocumentChunk.objects.all()
-    permission_classes = [permissions.AllowAny]  # Change to IsAuthenticated in production
+    permission_classes = [permissions.IsAuthenticated]
     
     def get_serializer_class(self):
         if self.action == "list":
@@ -215,7 +216,8 @@ class DocumentChunkViewSet(viewsets.ReadOnlyModelViewSet):
         return DocumentChunkSerializer
     
     def get_queryset(self):
-        queryset = DocumentChunk.objects.all()
+        # Filter chunks by documents owned by the authenticated user
+        queryset = DocumentChunk.objects.filter(document__uploaded_by=self.request.user)
         
         # Filter by document
         document_id = self.request.query_params.get("document")
@@ -237,7 +239,7 @@ class AnalyzeView(APIView):
     POST /documents/analyze/
     """
     
-    permission_classes = [permissions.AllowAny]  # Change to IsAuthenticated in production
+    permission_classes = [permissions.IsAuthenticated]
     parser_classes = [JSONParser]
     
     def post(self, request):
@@ -256,10 +258,11 @@ class AnalyzeView(APIView):
         print(f"[ANALYZE] Files: {file_names}")
         
         try:
-            # Find documents by name
+            # Find documents by name (only user's own documents)
             documents = Document.objects.filter(
                 name__in=file_names,
-                status=Document.Status.COMPLETED
+                status=Document.Status.COMPLETED,
+                uploaded_by=request.user
             )
             
             print(f"[ANALYZE] Found {documents.count()} processed document(s)")
@@ -291,12 +294,12 @@ class AnalyzeView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-            # Create analysis result
+            # Create analysis result (user is guaranteed authenticated)
             analysis_result = AnalysisResult.objects.create(
                 checklist_id=checklist_id,
                 checklist_title=checklist_title,
                 status=AnalysisResult.Status.PENDING,
-                analyzed_by=request.user if request.user.is_authenticated else None
+                analyzed_by=request.user
             )
             analysis_result.documents.set(documents)
             
@@ -337,7 +340,7 @@ class AnalysisResultViewSet(viewsets.ReadOnlyModelViewSet):
     """
     
     queryset = AnalysisResult.objects.all()
-    permission_classes = [permissions.AllowAny]  # Change to IsAuthenticated in production
+    permission_classes = [permissions.IsAuthenticated]
     
     def get_serializer_class(self):
         if self.action == "list":
@@ -345,7 +348,8 @@ class AnalysisResultViewSet(viewsets.ReadOnlyModelViewSet):
         return AnalysisResultSerializer
     
     def get_queryset(self):
-        queryset = AnalysisResult.objects.all()
+        # Filter analysis results by the authenticated user
+        queryset = AnalysisResult.objects.filter(analyzed_by=self.request.user)
         
         # Filter by checklist
         checklist_id = self.request.query_params.get("checklist_id")
@@ -376,7 +380,7 @@ class ExportAuditReportView(APIView):
         - regenerate: If "true", force regenerate PDF even if cached (optional)
     """
     
-    permission_classes = [permissions.AllowAny]  # Change to IsAuthenticated in production
+    permission_classes = [permissions.IsAuthenticated]
     
     def get(self, request):
         """Generate and download a PDF audit report."""
@@ -396,8 +400,11 @@ class ExportAuditReportView(APIView):
             else:
                 checklist_ids = None  # Get all
             
-            # Fetch analysis results
-            queryset = AnalysisResult.objects.filter(status=AnalysisResult.Status.COMPLETED)
+            # Fetch analysis results (only user's own results)
+            queryset = AnalysisResult.objects.filter(
+                status=AnalysisResult.Status.COMPLETED,
+                analyzed_by=request.user
+            )
             
             if checklist_ids:
                 queryset = queryset.filter(checklist_id__in=checklist_ids)

@@ -491,15 +491,18 @@ export default function Dashboard() {
   const complianceStats = useMemo(() => {
     const results = Object.values(analysisResults);
     
+    // Total controls is the number of checklists defined
+    const totalControls = checklists.length;
+    
     // Default sample values when no analysis exists
     if (results.length === 0) {
       return {
-        overallScore: 68,
-        controlsCompliant: 42,
-        totalControls: 93,
-        criticalGaps: 12,
-        maturityLevel: 2,
-        maturityLabel: 'Repeatable',
+        overallScore: 0,
+        controlsCompliant: 0,
+        totalControls,
+        criticalGaps: 0,
+        maturityLevel: 0,
+        maturityLabel: 'Not Assessed',
         isDefault: true
       };
     }
@@ -508,35 +511,19 @@ export default function Dashboard() {
     const totalScore = results.reduce((sum, r) => sum + (r.compliance_score || 0), 0);
     const overallScore = Math.round((totalScore / results.length) * 100);
     
-    // Calculate compliant controls from control_scores
+    // Count compliant checklists (compliance_status === 'compliant')
     let compliantControls = 0;
-    let totalControlsAssessed = 0;
-    
     results.forEach(r => {
-      const controlScores = r.control_scores || {};
-      Object.values(controlScores).forEach(score => {
-        totalControlsAssessed++;
-        if (score >= 0.7) compliantControls++; // 70%+ = compliant
-      });
+      if (r.compliance_status === 'compliant') {
+        compliantControls++;
+      }
     });
     
-    // Total ISO 27001:2022 Annex A controls = 93
-    const totalControls = 93;
-    // Extrapolate based on assessed controls
-    const estimatedCompliant = totalControlsAssessed > 0 
-      ? Math.round((compliantControls / totalControlsAssessed) * totalControls)
-      : 0;
-    
-    // Count critical gaps (high priority)
+    // Count critical gaps - all gaps are considered critical
     let criticalGaps = 0;
     results.forEach(r => {
       const gaps = r.gaps || [];
-      gaps.forEach(gap => {
-        const gapLower = gap.toLowerCase();
-        if (gapLower.includes('missing') || gapLower.includes('no evidence') || gapLower.includes('not defined')) {
-          criticalGaps++;
-        }
-      });
+      criticalGaps += gaps.length;
     });
     
     // Determine maturity level based on overall score
@@ -563,7 +550,7 @@ export default function Dashboard() {
     
     return {
       overallScore,
-      controlsCompliant: estimatedCompliant,
+      controlsCompliant: compliantControls,
       totalControls,
       criticalGaps,
       maturityLevel,
