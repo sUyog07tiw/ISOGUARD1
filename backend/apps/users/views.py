@@ -10,8 +10,8 @@ from .serializers import UserSerializer, UserRegistrationSerializer, LoginSerial
 
 def get_tokens_for_user(user):
     """Generate JWT tokens for a user."""
-    refresh = RefreshToken()
-    refresh['user_id'] = str(user.user_id)
+    refresh = RefreshToken.for_user(user)
+    # Add extra claims
     refresh['email'] = user.email
     refresh['name'] = user.name
     refresh['role'] = user.role

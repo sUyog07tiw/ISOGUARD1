@@ -76,7 +76,7 @@ export default function Login() {
               <span className="text-sm text-red-300">Secure Access Portal</span>
             </div>
             <h1 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
-              Welcome Back to <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-red-600">ISOGUARD</span>
+              Welcome  to <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-red-600">ISOGUARD</span>
             </h1>
             <p className="text-xl text-gray-300 mb-12 leading-relaxed">
               Access your ISO 27001:2022 compliance dashboard. Monitor your ISMS, track gaps, and generate audit reports.

@@ -31,3 +31,13 @@ class User(models.Model):
     def check_password(self, raw_password):
         """Check if the provided password matches the stored hash."""
         return check_password(raw_password, self.password)
+
+    @property
+    def is_authenticated(self):
+        """Always return True for authenticated users."""
+        return True
+
+    @property
+    def is_active(self):
+        """Default to active users."""
+        return True

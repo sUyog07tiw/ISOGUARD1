@@ -1,6 +1,6 @@
 import uuid
 from django.db import models
-from django.conf import settings
+from apps.users.models import User
 
 
 class Document(models.Model):
@@ -49,11 +49,13 @@ class Document(models.Model):
     
     # Optional: Link to user who uploaded
     uploaded_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
+        User,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="uploaded_documents"
+        related_name="uploaded_documents",
+        db_column="uploaded_by_id",
+        to_field="user_id"
     )
     
     class Meta:
@@ -216,11 +218,13 @@ class AnalysisResult(models.Model):
     
     # User who initiated analysis
     analyzed_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
+        User,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="analyses"
+        related_name="analyses",
+        db_column="analyzed_by_id",
+        to_field="user_id"
     )
     
     class Meta:
