@@ -19,8 +19,7 @@ class User(models.Model):
 
     class Meta:
         db_table = 'users'  # Maps to existing PostgreSQL table
-        managed = False  # Django won't try to create/modify this table
-
+        
     def __str__(self):
         return f"{self.name} ({self.email})"
 

@@ -50,19 +50,7 @@ export default function Reports() {
       
       const filename = `ISOGUARD_${report.checklist_title?.replace(/\s+/g, '_') || 'Report'}.pdf`;
       
-      // If PDF is already stored, download directly
-      if (report.pdf_report_url) {
-        const link = document.createElement('a');
-        link.href = report.pdf_report_url;
-        link.download = filename;
-        link.target = '_blank';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        return;
-      }
-      
-      // Otherwise generate via API
+      // Always use API endpoint to download PDF (handles both stored and generated PDFs)
       const API_BASE_URL = '/api';
       const endpoint = `/export-report/?checklist_ids=${report.checklist_id}`;
       const token = localStorage.getItem('access_token');
@@ -173,21 +161,7 @@ export default function Reports() {
         window.URL.revokeObjectURL(pdfUrl);
       }
       
-      // If PDF is already stored, use it directly
-      if (report.pdf_report_url) {
-        // Fetch the stored PDF to create blob URL for iframe
-        const response = await fetch(report.pdf_report_url);
-        if (response.ok) {
-          const blob = await response.blob();
-          const url = window.URL.createObjectURL(blob);
-          setPdfUrl(url);
-          setShowPdfViewer(true);
-          return;
-        }
-        // If stored PDF fails, fall through to generate new one
-      }
-      
-      // Generate PDF via API
+      // Always use API endpoint to get PDF (handles both stored and generated PDFs)
       const API_BASE_URL = '/api';
       const endpoint = `/export-report/?checklist_ids=${report.checklist_id}`;
       const token = localStorage.getItem('access_token');

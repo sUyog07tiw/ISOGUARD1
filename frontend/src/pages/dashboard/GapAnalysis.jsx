@@ -4,13 +4,18 @@ import logo from "../../assets/Logo.jpg";
 import { logout, getCurrentUser } from "../../utils/auth";
 import api from "../../utils/api";
 
-// ISO 27001:2022 Checklist titles
+// ISO 27001:2022 Checklist titles - all 10 checklists
 const checklistTitles = {
-  1: "A.5 Information Security Policies",
-  2: "A.6 Organization of Information Security",
-  3: "A.7 Human Resource Security",
-  4: "A.8 Asset Management",
-  5: "A.9 Access Control",
+  1: "Annex A 5.1 - Policies for Information Security",
+  2: "Annex A 5.2 - Information Security Roles and Responsibilities",
+  3: "Annex A 5.9 - Inventory of Information and Other Associated Assets",
+  4: "Annex A 5.10 - Acceptable Use of Information and Other Associated Assets",
+  5: "Annex A 5.12 - Classification of Information",
+  6: "Annex A 5.7 - Threat Intelligence",
+  7: "Annex A 6.1 - Screening",
+  8: "Annex A 7.4 - Physical Security Monitoring",
+  9: "Annex A 8.18 - Use of Privileged Utility Programs",
+  10: "Annex A 8.2 - Access Rights",
 };
 
 export default function GapAnalysis() {
@@ -56,13 +61,29 @@ export default function GapAnalysis() {
     analyses.forEach(analysis => {
       const gaps = analysis.gaps || [];
       gaps.forEach((gap, index) => {
-        // Determine priority based on control score or position
-        let priority = 'medium';
-        if (index === 0 || gap.toLowerCase().includes('missing') || gap.toLowerCase().includes('no evidence')) {
+        // Determine priority based on gap content keywords
+        const gapLower = gap.toLowerCase();
+        let priority = 'medium'; // default
+        
+        // High priority indicators - critical issues
+        if (gapLower.includes('not satisfied') || 
+            gapLower.includes('missing') || 
+            gapLower.includes('no evidence') ||
+            gapLower.includes('not implemented') ||
+            gapLower.includes('not documented') ||
+            gapLower.includes('not established') ||
+            gapLower.includes('not defined')) {
           priority = 'high';
-        } else if (gap.toLowerCase().includes('partial') || gap.toLowerCase().includes('consider')) {
+        } 
+        // Low priority indicators - minor issues  
+        else if (gapLower.includes('may not be') ||
+                 gapLower.includes('adequately addressed') ||
+                 gapLower.includes('consider') ||
+                 gapLower.includes('could be improved') ||
+                 gapLower.includes('enhancement')) {
           priority = 'low';
         }
+        // Medium priority - everything else (default)
         
         allGaps.push({
           id: `${analysis.checklist_id}-${index}`,
@@ -112,38 +133,20 @@ export default function GapAnalysis() {
     return allFindings;
   };
 
-  // Default gaps when no analysis exists
-  const defaultGaps = [
-    { id: 'default-1', checklistId: 1, checklistTitle: 'A.5 Information Security Policies', gap: 'Information security policy document not found or not aligned with ISO 27001:2022 requirements.', priority: 'high', complianceScore: 0.68, complianceStatus: 'partial' },
-    { id: 'default-2', checklistId: 4, checklistTitle: 'A.8 Asset Management', gap: 'Annex A.8.10: Information Deletion policy missing. No documented procedures for secure data deletion.', priority: 'high', complianceScore: 0.55, complianceStatus: 'partial' },
-    { id: 'default-3', checklistId: 1, checklistTitle: 'A.5 Information Security Policies', gap: 'Clause 6.2: ISMS Objectives not documented or lack measurable targets.', priority: 'medium', complianceScore: 0.68, complianceStatus: 'partial' },
-    { id: 'default-4', checklistId: 2, checklistTitle: 'A.6 Organization of Information Security', gap: 'Segregation of duties not fully implemented across critical functions.', priority: 'medium', complianceScore: 0.62, complianceStatus: 'partial' },
-    { id: 'default-5', checklistId: 3, checklistTitle: 'A.7 Human Resource Security', gap: 'Security awareness training frequency should be enhanced from annual to quarterly.', priority: 'low', complianceScore: 0.75, complianceStatus: 'partial' },
-    { id: 'default-6', checklistId: 5, checklistTitle: 'A.9 Access Control', gap: 'Access control logs for Annex A.8.3 require periodic review procedures.', priority: 'low', complianceScore: 0.72, complianceStatus: 'partial' },
-  ];
+  // No default gaps - use real data only
+  const defaultGaps = [];
+  const defaultRecommendations = [];
+  const defaultFindings = [];
 
-  const defaultRecommendations = [
-    { id: 'rec-default-1', checklistId: 1, checklistTitle: 'A.5 Information Security Policies', recommendation: 'Develop a comprehensive Information Security Policy aligned with ISO 27001:2022 Clause 5.2, including top management commitment and security objectives.' },
-    { id: 'rec-default-2', checklistId: 4, checklistTitle: 'A.8 Asset Management', recommendation: 'Implement secure data deletion procedures per NIST SP 800-88 guidelines and document in your Asset Management policy.' },
-    { id: 'rec-default-3', checklistId: 2, checklistTitle: 'A.6 Organization of Information Security', recommendation: 'Define clear roles and responsibilities matrix (RACI) for all ISMS-related activities.' },
-    { id: 'rec-default-4', checklistId: 5, checklistTitle: 'A.9 Access Control', recommendation: 'Implement Multi-Factor Authentication (MFA) for all privileged and remote access scenarios.' },
-  ];
-
-  const defaultFindings = [
-    { id: 'finding-default-1', checklistId: 1, checklistTitle: 'A.5 Information Security Policies', finding: 'The organization has a basic security policy but lacks integration with business strategy.' },
-    { id: 'finding-default-2', checklistId: 3, checklistTitle: 'A.7 Human Resource Security', finding: 'Background verification process exists but is not consistently applied to all roles.' },
-    { id: 'finding-default-3', checklistId: 4, checklistTitle: 'A.8 Asset Management', finding: 'Asset inventory is maintained but classification scheme needs enhancement.' },
-  ];
-
-  // Use real data if available, otherwise use defaults
+  // Use real data from analyses
   const realGaps = getAllGaps();
   const realRecommendations = getAllRecommendations();
   const realFindings = getAllFindings();
   
-  const allGaps = realGaps.length > 0 ? realGaps : defaultGaps;
-  const allRecommendations = realRecommendations.length > 0 ? realRecommendations : defaultRecommendations;
-  const allFindings = realFindings.length > 0 ? realFindings : defaultFindings;
-  const isUsingDefaults = realGaps.length === 0;
+  const allGaps = realGaps;
+  const allRecommendations = realRecommendations;
+  const allFindings = realFindings;
+  const isUsingDefaults = realGaps.length === 0 && analyses.length === 0;
   
   // Apply filters
   const filteredGaps = allGaps.filter(gap => {
@@ -263,14 +266,14 @@ export default function GapAnalysis() {
           </div>
         ) : (
           <>
-            {/* Sample Data Notice */}
+            {/* No Data Notice */}
             {isUsingDefaults && (
               <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 flex items-center gap-3">
                 <svg className="w-5 h-5 text-yellow-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <p className="text-yellow-200 text-sm">
-                  Showing sample gaps from typical ISO 27001:2022 audits. <Link to="/dashboard" className="underline text-yellow-400 hover:text-yellow-300">Upload and analyze your documents</Link> to see real gaps from your ISMS.
+                  No analysis data available yet. <Link to="/dashboard" className="underline text-yellow-400 hover:text-yellow-300">Upload and analyze your documents</Link> to see gaps from your ISMS.
                 </p>
               </div>
             )}
